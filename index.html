@@ -61,7 +61,7 @@ body.sidehid .layout{grid-template-columns:minmax(0,1fr)}body.sidehid .side{disp
 .hint{font-size:11.5px;color:var(--muted);margin:0;line-height:1.45}
 .msg{padding:7px 9px;border-radius:6px;background:#f6f8fc;color:#526074;font-size:12px}.msg.ok{background:#ecfdf3;color:#067647}.msg.err{background:#fff1f0;color:var(--err)}.msg.warn{background:var(--warn-soft);color:var(--warn)}
 .chk{display:flex;align-items:center;gap:7px;font-size:12.5px;cursor:pointer}.chk input{width:auto;margin:0}
-.ty{flex:0 0 18px;height:17px;border-radius:4px;background:#eef1f6;color:#5b6472;font:700 10px/17px Arial,sans-serif;text-align:center}.ty.num{background:#e9f0fa;color:var(--blue)}.ty.date{background:#e6f5ee;color:#0b7a50}
+.ty{flex:0 0 18px;height:17px;border-radius:4px;background:#eef1f6;color:#5b6472;font:700 10px/17px Arial,sans-serif;text-align:center}.ty.num{background:#e9f0fa;color:var(--blue)}.ty.date{background:#e6f5ee;color:#0b7a50}.ty.calc{background:#fff1e0;color:#a65400;font-size:9px}
 /* danh sách cột đã chọn */
 .clist{display:flex;flex-direction:column;border:1px solid #e8ebef;border-radius:8px;overflow:hidden}
 .citem{display:flex;align-items:center;gap:6px;padding:4px 6px;border-bottom:1px solid #f0f2f5;background:#fff;font-size:12.5px;cursor:pointer}
@@ -132,7 +132,22 @@ body.sidehid .layout{grid-template-columns:minmax(0,1fr)}body.sidehid .side{disp
 .rpt .rfl{font-weight:700;line-height:1.5;text-align:center}
 .rpt .rn{line-height:1.45;outline:none;min-height:1em}.rpt.design .ph{color:#8b95a5}
 .rpt .fz{position:sticky;z-index:1;background-color:#fff}.rpt th.fz{z-index:4}
-.rpt table{border-collapse:separate;border-spacing:0;table-layout:fixed;margin:0 auto}
+.rpt table{border-collapse:separate;border-spacing:0;table-layout:fixed;margin:0}
+.rpt .rline{line-height:1.45;position:relative;min-height:1.2em}.rpt .rline .lt{outline:none;display:inline-block;min-width:40px}
+.rpt.design .rline{border-radius:3px}.rpt.design .rline:hover{box-shadow:0 0 0 1px #b9cbe6}
+.rpt .lbar{position:absolute;right:0;top:50%;transform:translateY(-50%);display:none;gap:2px;font:12px Inter,Segoe UI,sans-serif;font-style:normal;font-weight:400}
+.rpt.design .rline:hover .lbar,.rpt.design .rline:focus-within .lbar{display:inline-flex}
+.rpt .lbar button{padding:1px 6px;font-size:11.5px;height:22px;display:inline-flex;align-items:center}
+.rpt .laddbtn{display:block;margin:2px auto 6px;border:1px dashed #c9d2df;background:#fafbfd;color:#1f56a0;font:12px Inter,Segoe UI,sans-serif;padding:2px 10px;border-radius:6px}
+.rpt .rbot{margin-top:6px}
+.rpt.design .rline .lt:empty::before{content:'Gõ nội dung, hoặc bấm Chèn để thêm giá trị cột…';color:#9aa3b2;font-style:italic}
+.rpt tr.hsrc th{background:#eef1f5!important;color:#7a8494;font:10.5px Inter,Segoe UI,sans-serif;font-weight:500;padding:1px 4px;border-top:1px solid var(--grid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rpt tr.hsrc+tr.h1 th{border-top:0}
+.gbar{position:sticky;top:-14px;left:0;z-index:6;display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:-14px -14px 10px;padding:6px 14px;background:#f7f8fa;border-bottom:1px solid #dfe3e8;font-size:12px;color:#646a73}
+.gbar.drop{background:#e9f0fa;box-shadow:inset 0 0 0 2px #1f56a066}
+.gbar .gchip{display:inline-flex;align-items:center;gap:4px;padding:2px 4px 2px 9px;border-radius:999px;border:1px solid #c9d6ea;background:#fff;color:#1f2329;font-size:12px;cursor:pointer}
+.gbar .gchip b{color:#1f56a0;font-weight:600}.gbar .gchip .x{border:0;background:none;padding:0 3px;height:18px;color:#9aa3b2}.gbar .gchip .x:hover{color:var(--err)}
+.gbar .gsep{color:#b3bac6}.gbar .gopt{margin-left:auto;font-size:12px;padding:2px 9px}
 .rpt th,.rpt td{border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);padding:var(--pad,3px) 5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.35}
 .rpt tr>:first-child{border-left:1px solid var(--grid)}
 .rpt thead tr:first-child th{border-top:1px solid var(--grid)}
@@ -268,29 +283,15 @@ body.dashview.sidehid .layout{grid-template-columns:minmax(0,1fr)}
         <p class="hint" id="packHint"></p>
       </div>
     </div>
-    <div class="sec" id="secCols"><h3>2 · Cột dữ liệu <span class="cnt" id="colCnt"></span></h3>
+    <div class="sec" id="secCols"><h3>2 · Cột hiển thị <span class="cnt" id="colCnt"></span></h3>
       <div class="row"><input type="search" id="fSearch" placeholder="Tìm cột…" aria-label="Tìm cột"><button id="fAll" class="fit" style="font-size:12px">Chọn hết</button><button id="fNone" class="fit" style="font-size:12px">Bỏ hết</button></div>
       <div class="flist" id="fList"></div>
-      <p class="hint">Tick để hiện cột trên báo cáo. Đổi thứ tự: kéo tiêu đề cột trên mẫu. <b>Chuột phải</b> vào bảng để nhóm, tính tổng, STT, gộp ô, neo cột…</p>
+      <button class="addbtn ib" id="calcAdd"><svg class="i"><use href="#i-plus"/></svg>Cột công thức (chỉ trên báo cáo)</button>
+      <p class="hint">Kéo tiêu đề cột trên mẫu để đổi thứ tự · bấm đúp tiêu đề để đổi tên · <b>chuột phải</b> để nhóm, tính tổng, STT, gộp ô, neo cột…</p>
     </div>
-    <div class="sec" id="secHead"><h3>3 · Tiêu đề &amp; ghi chú</h3>
-      <label class="lbl">Dòng "Từ ngày … đến ngày …"<select id="hDl"></select></label>
-      <div class="sub">Dòng ghi chú dưới tiêu đề</div>
-      <div class="lv" id="noteList"></div>
-      <div class="row"><button class="addbtn fit" id="noteAddF">+ Ghi chú từ cột</button><button class="addbtn fit" id="noteAddT">+ Ghi chú nhập tay</button></div>
-    </div>
-    <div class="sec" id="secGrp"><h3>4 · Nhóm &amp; tổng</h3>
-      <div class="lv" id="grpList"></div>
-      <button class="addbtn" id="grpAdd">+ Thêm cấp nhóm</button>
-      <div id="grpOpts" class="lv">
-        <div class="chips" id="gChips"><button data-k="gSub">Số tổng nhóm</button><button data-k="gNum">Đánh số 1. / 1.1</button><button data-k="gCnt">Số dòng</button><button data-k="gUp">IN HOA cấp 1</button></div>
-        <label class="lbl">Khi mở báo cáo hiện<select id="gOpen"><option value="0">Chỉ nhóm cấp 1</option><option value="1">Tới nhóm cấp 2</option><option value="2">Tới nhóm cấp 3</option><option value="9">Mở hết (cả dòng chi tiết)</option></select></label>
-      </div>
-      <div class="row"><label class="chk fit"><input type="checkbox" id="gTotal"> Dòng tổng cộng</label><input type="text" id="gTotalLbl" aria-label="Chữ của dòng tổng cộng"></div>
-    </div>
-    <div class="sec" id="secFlt"><h3>5 · Bộ lọc cho người xem</h3>
+    <div class="sec" id="secFlt"><h3>3 · Cột lọc dữ liệu</h3>
       <div class="lv" id="fltList"></div>
-      <button class="addbtn" id="fltAdd">+ Thêm bộ lọc</button>
+      <button class="addbtn" id="fltAdd">+ Thêm cột lọc</button>
     </div>
   </div>
   <div id="pView" class="fpanel" hidden>
@@ -332,6 +333,7 @@ body.dashview.sidehid .layout{grid-template-columns:minmax(0,1fr)}
     <label class="lbl">Kiểu ngày<select id="lDf"><option value="dd/mm/yyyy">21/11/2026</option><option value="dd/mm/yy">21/11/26</option></select></label>
     <label class="lbl">Cỡ chữ bảng<input type="number" id="lFs" min="8" max="20"></label>
   </div>
+  <label class="chk"><input type="checkbox" id="lFit"> Giãn cột vừa khung khi xem / in</label>
   <label class="chk"><input type="checkbox" id="lShowF"> In điều kiện lọc dưới tiêu đề</label>
   <label class="chk"><input type="checkbox" id="fShow"> Hiện phần ký tên cuối báo cáo</label>
   <label class="chk"><input type="checkbox" id="fDate"> Dòng "Ngày … tháng … năm …" trên chữ ký phải</label>
@@ -349,7 +351,7 @@ body.dashview.sidehid .layout{grid-template-columns:minmax(0,1fr)}
 const SDK_URL = 'https://esm.sh/@lark-base-open/js-sdk@1.0.2';
 const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
 const PACK_SEP = '‖', PACK_TAG = '§', PACK_NAME = 'Gói dữ liệu báo cáo';
-const BLOCK_MAX = 12000, VER = '1.2', VIEW_CAP = 2000, CACHE_MS = 60000;
+const BLOCK_MAX = 12000, VER = '1.3', VIEW_CAP = 2000, CACHE_MS = 60000;
 let SDK = null, bitable = null, dashboard = null, workspace = null, FieldType = null;
 const FT = (k, d) => (FieldType && FieldType[k] !== undefined ? FieldType[k] : d);
 
@@ -433,12 +435,12 @@ const isEdit = () => S.dash === 'Create' || S.dash === 'Config';
 const isView = () => S.dash === 'View' || S.dash === 'FullScreen';
 const defSty = () => ({ title: { fs: 18, b: true, al: 'c' }, sub: { fs: 13, i: true, al: 'c' }, head: { b: true, bg: '#fdf6d3', c: '#1f2329', al: 'c' }, body: {}, g0: { b: true, bg: '#e3eefb' }, g1: { b: true, bg: '#f1f6fd' }, total: { b: true, bg: '#fdf6d3' }, foot: { al: 'c' }, note: { al: 'c' } });
 function defLayout(name, title) {
-  return { name: name || 'Mẫu chuẩn', title: title || 'BÁO CÁO', dl: 'auto', notes: [], pad: 'M', freeze: 0, font: 'Times New Roman', fs: 13, orient: 'L',
+  return { name: name || 'Mẫu chuẩn', title: title || 'BÁO CÁO', top: [{ id: uid(), text: '{Khoảng ngày}', s: { i: true, al: 'c' } }], bottom: [], fit: true, pad: 'M', freeze: 0, font: 'Times New Roman', fs: 13, orient: 'L',
     cols: [], groups: [], sort: [], mode: 'detail', showNo: false, total: true, totalLabel: 'Tổng cộng:', gSub: true, gNum: true, gCnt: false, gUp: true, open: 9, showF: true,
     nf: 'en', dp: '', neg: 'minus', zero: 'blank', df: 'dd/mm/yyyy', grid: '#9aa0a6', zebra: false, sty: defSty(),
     foot: { show: true, l: 'Người lập biểu', ls: '(Ký, họ tên)', c: '', cs: '', r: 'Kế toán trưởng', rs: '(Ký, họ tên)', date: true } };
 }
-function defCfg() { return { v: 2, src: { tableId: '', tableName: '', viewId: '', baseToken: '', packId: '', packSig: [], packCols: [] }, filters: [], layouts: [defLayout()], cur: 0 }; }
+function defCfg() { return { v: 3, calcs: [], src: { tableId: '', tableName: '', viewId: '', baseToken: '', packId: '', packSig: [], packCols: [] }, filters: [], layouts: [defLayout()], cur: 0 }; }
 const COLDEF = { f: '', h: '', g: '', w: 120, al: '', fmt: '', dp: '', agg: '', mg: false, wrap: false, s: {} };
 function fixCfg(c) {
   const d = defCfg(); c = Object.assign(d, c || {}); c.src = Object.assign(defCfg().src, c.src || {});
@@ -448,10 +450,17 @@ function fixCfg(c) {
     if (l.st && !l.sty) { o.sty.head.bg = l.st.hb || o.sty.head.bg; o.sty.head.c = l.st.hc || o.sty.head.c; o.sty.total.bg = l.st.tb || o.sty.total.bg; o.sty.g0.bg = l.st.g1 || o.sty.g0.bg; o.sty.g1.bg = l.st.g2 || o.sty.g1.bg; o.grid = l.st.grid || o.grid; o.zebra = !!l.st.zebra; if (l.tfs) o.sty.title.fs = l.tfs; } // cấu hình v1.0
     o.foot = Object.assign(defLayout().foot, l.foot || {});
     o.cols = (o.cols || []).map((x) => { const y = Object.assign(clone(COLDEF), x); if (/^n\d$/.test(y.fmt)) { y.dp = +y.fmt[1]; y.fmt = 'num'; } if (x.b) y.s = { ...y.s, b: true }; delete y.b; y.s = y.s || {}; return y; });
-    o.groups = o.groups || []; o.sort = o.sort || []; o.notes = o.notes || [];
-    if (typeof l.sub === 'string') { const t = l.sub.replace(/T[ừu] ngày \{TU_NGAY\} đến ngày \{DEN_NGAY\}/i, '').trim(); if (t) o.notes.unshift({ id: uid(), t: 'text', text: t }); } // cấu hình v1.0/1.1
-    delete o.sub; delete o.st; delete o.tfs; return o;
+    o.groups = o.groups || []; o.sort = o.sort || [];
+    if (!l.top) { // cấu hình v1.0–1.2 → dòng tự do trên báo cáo
+      o.top = [];
+      if (typeof l.sub === 'string') { const t = l.sub.replace(/T[ừu] ngày \{TU_NGAY\} đến ngày \{DEN_NGAY\}/i, '{Khoảng ngày}').trim(); if (t) o.top.push({ id: uid(), text: t, s: { i: true, al: 'c' } }); }
+      else if (l.dl !== '') o.top.push({ id: uid(), text: '{Khoảng ngày}', s: Object.assign({ i: true, al: 'c' }, (l.sty || {}).sub || {}) });
+      for (const n of l.notes || []) o.top.push({ id: uid(), text: n.t === 'field' ? (n.label || '') + '[#' + n.f + ']' : (n.text || ''), s: Object.assign({ al: 'c' }, (l.sty || {}).note || {}) });
+    }
+    o.top = (o.top || []).map((x) => ({ id: x.id || uid(), text: x.text || '', s: x.s || {} })); o.bottom = (o.bottom || []).map((x) => ({ id: x.id || uid(), text: x.text || '', s: x.s || {} }));
+    delete o.sub; delete o.dl; delete o.notes; delete o.st; delete o.tfs; return o;
   });
+  c.calcs = (c.calcs || []).map((x) => ({ id: x.id || 'calc_' + uid(), name: x.name || 'Cột công thức', expr: x.expr || '', k: x.k || 'num' }));
   if (!(c.cur >= 0 && c.cur < c.layouts.length)) c.cur = 0; return c;
 }
 
@@ -478,9 +487,77 @@ function tyBadge(f) {
   if (f.k === 'num') c = '#'; else if (f.k === 'date') c = 'D';
   else if (t === FT('SingleSelect', 3) || t === FT('MultiSelect', 4)) c = '◉'; else if (t === FT('User', 11) || t === FT('CreatedUser', 1003)) c = '@';
   else if (t === FT('SingleLink', 18) || t === FT('DuplexLink', 21)) c = '↗'; else if (t === FT('Formula', 20)) c = 'ƒ'; else if (t === FT('Checkbox', 7)) c = '✓';
+  if (f.calc) return `<span class="ty calc" aria-hidden="true">ƒx</span>`;
   return `<span class="ty ${f.k}" aria-hidden="true">${c}</span>`;
 }
-function setFields(list) { S.fields = azSort(list); S.fIdx = new Map(S.fields.map((f) => [f.id, f])); }
+function setFields(list) { S.baseFields = list.filter((f) => !f.calc); S.fields = azSort([...S.baseFields, ...calcFields()]); S.fIdx = new Map(S.fields.map((f) => [f.id, f])); }
+const refreshFields = () => setFields(S.baseFields || []);
+
+/* ---------------- cột công thức (chỉ trên báo cáo, không thêm vào Base) ---------------- */
+const calcFields = () => ((S.cfg && S.cfg.calcs) || []).map((c) => ({ id: c.id, name: c.name, type: 'calc', k: c.k || 'num', calc: true }));
+const N = (x) => { if (x === null || x === undefined || x === '') return 0; if (typeof x === 'number') return x; if (typeof x === 'boolean') return x ? 1 : 0; const n = toNum(x); return n === null ? 0 : n; };
+const Str = (x) => (x === null || x === undefined ? '' : typeof x === 'boolean' ? (x ? 'TRUE' : 'FALSE') : typeof x === 'number' ? String(Math.round(x * 1e10) / 1e10) : String(x));
+const truthy = (x) => (typeof x === 'boolean' ? x : typeof x === 'number' ? x !== 0 : x !== null && x !== undefined && x !== '');
+const DIV = (a, b) => (N(b) === 0 ? null : N(a) / N(b));
+function CMP(a, op, b) {
+  const num = (typeof a === 'number' || typeof b === 'number') && (a === null || a === '' || typeof a === 'number' || toNum(a) !== null) && (b === null || b === '' || typeof b === 'number' || toNum(b) !== null);
+  const c = num ? N(a) - N(b) : VCOLL.compare(Str(a), Str(b));
+  return op === '=' || op === '==' ? c === 0 : op === '<>' || op === '!=' ? c !== 0 : op === '<' ? c < 0 : op === '>' ? c > 0 : op === '<=' ? c <= 0 : c >= 0;
+}
+const dOf = (d) => (d === null || d === undefined || d === '' ? null : new Date(typeof d === 'number' ? d : parseDate(d)));
+const FN = {
+  IF: (c, a, b = null) => (truthy(c) ? a : b), AND: (...a) => a.every(truthy), OR: (...a) => a.some(truthy), NOT: (a) => !truthy(a),
+  SUM: (...a) => a.reduce((s, x) => s + N(x), 0), AVERAGE: (...a) => (a.length ? a.reduce((s, x) => s + N(x), 0) / a.length : 0),
+  MIN: (...a) => Math.min(...a.map(N)), MAX: (...a) => Math.max(...a.map(N)), ABS: (x) => Math.abs(N(x)), INT: (x) => Math.floor(N(x)), MOD: (a, b) => N(a) % N(b), POWER: (a, b) => Math.pow(N(a), N(b)),
+  ROUND: (x, n = 0) => { const p = 10 ** N(n); return Math.round(N(x) * p) / p; }, ROUNDUP: (x, n = 0) => { const p = 10 ** N(n); return Math.ceil(N(x) * p) / p; }, ROUNDDOWN: (x, n = 0) => { const p = 10 ** N(n); return Math.floor(N(x) * p) / p; },
+  LEN: (s) => Str(s).length, LEFT: (s, n = 1) => Str(s).slice(0, N(n)), RIGHT: (s, n = 1) => (N(n) ? Str(s).slice(-N(n)) : ''), MID: (s, st, n) => Str(s).substr(N(st) - 1, N(n)),
+  UPPER: (s) => Str(s).toLocaleUpperCase('vi'), LOWER: (s) => Str(s).toLocaleLowerCase('vi'), TRIM: (s) => norm(s), CONCAT: (...a) => a.map(Str).join(''), VALUE: (s) => N(s),
+  TODAY: () => new Date().setHours(0, 0, 0, 0), DATE: (y, m, d) => new Date(N(y), N(m) - 1, N(d)).getTime(),
+  YEAR: (d) => (dOf(d) ? dOf(d).getFullYear() : null), MONTH: (d) => (dOf(d) ? dOf(d).getMonth() + 1 : null), DAY: (d) => (dOf(d) ? dOf(d).getDate() : null),
+  DAYS: (a, b) => (dOf(a) && dOf(b) ? Math.round((dOf(a) - dOf(b)) / 864e5) : null),
+  ISBLANK: (x) => x === null || x === undefined || x === '', BLANK: () => null,
+  IFERROR: (a, b) => (a === null || a === undefined || (typeof a === 'number' && !Number.isFinite(a)) ? b : a),
+};
+// Bộ đọc công thức kiểu Excel: [Tên cột], số, "chữ", + - * / ^ % &, = <> < > <= >=, hàm trong FN
+function compileCalc(expr, selfId) {
+  const src = String(expr || ''); const toks = []; const re = /\s*(?:(\d+(?:\.\d+)?)|"((?:[^"]|"")*)"|\[([^\]]+)\]|([A-Za-z_][A-Za-z0-9_]*)|(<=|>=|<>|!=|==|[-+*/&=<>(),%^;]))/y;
+  let m, i = 0; const ws = /\s*/y;
+  while (true) { ws.lastIndex = i; ws.exec(src); i = ws.lastIndex; if (i >= src.length) break; re.lastIndex = i; m = re.exec(src); if (!m) throw new Error('Không hiểu ký tự ở vị trí ' + (i + 1) + ': "' + src.slice(i, i + 12) + '"'); i = re.lastIndex;
+    if (m[1] !== undefined) toks.push({ t: 'num', v: m[1] }); else if (m[2] !== undefined) toks.push({ t: 'str', v: m[2].replace(/""/g, '"') }); else if (m[3] !== undefined) toks.push({ t: 'fld', v: m[3] }); else if (m[4] !== undefined) toks.push({ t: 'id', v: m[4] }); else toks.push({ t: 'op', v: m[5] === ';' ? ',' : m[5] }); }
+  let p = 0; const refs = new Set(), calcs = (S.cfg && S.cfg.calcs) || [], selfIdx = calcs.findIndex((c) => c.id === selfId);
+  const peek = () => toks[p], eat = (v) => { const t = toks[p]; if (!t || (v && t.v !== v)) throw new Error(v ? `Thiếu "${v}"` : 'Công thức chưa hoàn chỉnh'); p++; return t; };
+  const isOp = (...vs) => peek() && peek().t === 'op' && vs.includes(peek().v);
+  const prim = () => {
+    const t = peek(); if (!t) throw new Error('Công thức chưa hoàn chỉnh');
+    if (t.t === 'num') { p++; return t.v; } if (t.t === 'str') { p++; return JSON.stringify(t.v); }
+    if (t.t === 'fld') { p++; const k = fold(t.v); const f = (S.baseFields || []).find((x) => fold(x.name) === k) || calcs.slice(0, selfIdx < 0 ? calcs.length : selfIdx).map((c) => ({ id: c.id, name: c.name })).find((x) => fold(x.name) === k); if (!f) throw new Error(`Không có cột [${t.v}]`); refs.add(f.id); return `r[${JSON.stringify(f.id)}]`; }
+    if (t.t === 'id') { p++; const nm = t.v.toUpperCase(); if (nm === 'TRUE' || nm === 'FALSE') return nm.toLowerCase(); if (!FN[nm]) throw new Error(`Không có hàm ${t.v}`); eat('('); const args = []; if (!isOp(')')) { args.push(expr0()); while (isOp(',')) { p++; args.push(expr0()); } } eat(')'); return `FN.${nm}(${args.join(',')})`; }
+    if (isOp('(')) { p++; const e = expr0(); eat(')'); return `(${e})`; }
+    throw new Error(`Không hiểu "${t.v}"`);
+  };
+  const post = () => { let a = prim(); while (isOp('%')) { p++; a = `(N(${a})/100)`; } return a; };
+  const una = () => { if (isOp('-')) { p++; return `(-N(${una()}))`; } if (isOp('+')) { p++; return una(); } return post(); };
+  const pow = () => { let a = una(); while (isOp('^')) { p++; a = `Math.pow(N(${a}),N(${una()}))`; } return a; };
+  const mul = () => { let a = pow(); while (isOp('*', '/')) { const o = toks[p++].v, b = pow(); a = o === '*' ? `(N(${a})*N(${b}))` : `DIV(${a},${b})`; } return a; };
+  const add = () => { let a = mul(); while (isOp('+', '-')) { const o = toks[p++].v, b = mul(); a = `(N(${a})${o}N(${b}))`; } return a; };
+  const cat = () => { let a = add(); while (isOp('&')) { p++; a = `(Str(${a})+Str(${add()}))`; } return a; };
+  const expr0 = () => { let a = cat(); while (isOp('=', '==', '<>', '!=', '<', '>', '<=', '>=')) { const o = toks[p++].v; a = `CMP(${a},${JSON.stringify(o)},${cat()})`; } return a; };
+  if (!toks.length) throw new Error('Chưa nhập công thức');
+  const js = expr0(); if (p < toks.length) throw new Error(`Thừa "${toks[p].v}"`);
+  const fn = new Function('r', 'N', 'Str', 'DIV', 'CMP', 'FN', `return ${js};`); // chỉ sinh từ các ký hiệu đã kiểm tra ở trên
+  return { run: (r) => fn(r, N, Str, DIV, CMP, FN), refs: [...refs] };
+}
+function calcOut(k, v) {
+  if (k === 'num') { const n = typeof v === 'number' ? v : typeof v === 'boolean' ? (v ? 1 : 0) : toNum(v); return n === null || !Number.isFinite(n) ? null : n; }
+  if (k === 'date') return typeof v === 'number' && v > 1e11 ? v : parseDate(v);
+  return typeof v === 'boolean' ? (v ? '✓' : '') : v === null || v === undefined ? '' : Str(v);
+}
+function computeCalcs(rows) {
+  const list = (S.cfg && S.cfg.calcs) || []; if (!list.length || !rows || !rows.length) return rows;
+  for (const c of list) { let cc; try { cc = compileCalc(c.expr, c.id); } catch (e) { for (const r of rows) r[c.id] = null; continue; } for (const r of rows) { let v; try { v = cc.run(r); } catch (e) { v = null; } r[c.id] = calcOut(c.k, v); } }
+  return rows;
+}
+function calcRefs() { const ids = new Set(); for (const c of (S.cfg && S.cfg.calcs) || []) { try { compileCalc(c.expr, c.id).refs.forEach((x) => ids.add(x)); } catch (e) {} } return [...ids]; }
 const fName = (id) => (S.fIdx.get(id) || {}).name || '(cột đã xóa)';
 function cellVal(f, raw) {
   if (raw === null || raw === undefined) return f.k === 'text' ? '' : null;
@@ -544,12 +621,22 @@ function presetRange(p) {
   if (p === 'quarter') { const q = Math.floor(m / 3) * 3; return r(new Date(y, q, 1), new Date(y, q + 3, 0)); }
   if (p === 'year') return r(new Date(y, 0, 1), new Date(y, 11, 31)); return { from: '', to: '' };
 }
-function initFv() { S.fv = {}; for (const F of S.cfg.filters) if (F.kind === 'date') S.fv[F.id] = presetRange(F.def); }
+// Lọc ngày có 3 kiểu: khoảng ngày (từ – đến), một ngày, đến ngày (lũy kế tới ngày đó)
+const DATE_KINDS = new Set(['date', 'day', 'asof']);
+const DAY_PRESETS = { '': 'Để trống', today: 'Hôm nay', yest: 'Hôm qua', eom: 'Cuối tháng này', leom: 'Cuối tháng trước', eoq: 'Cuối quý này', eoy: 'Cuối năm nay' };
+function presetDay(p) {
+  const n = new Date(), y = n.getFullYear(), m = n.getMonth(), f = (d) => isoDay(d.getTime());
+  if (p === 'today') return f(n); if (p === 'yest') return f(new Date(y, m, n.getDate() - 1)); if (p === 'eom') return f(new Date(y, m + 1, 0)); if (p === 'leom') return f(new Date(y, m, 0));
+  if (p === 'eoq') return f(new Date(y, Math.floor(m / 3) * 3 + 3, 0)); if (p === 'eoy') return f(new Date(y, 11, 31)); return '';
+}
+function fvDefault(F) { return F.kind === 'date' ? presetRange(F.def) : F.kind === 'day' ? { d: presetDay(F.def) } : F.kind === 'asof' ? { to: presetDay(F.def) } : null; }
+function initFv() { S.fv = {}; for (const F of S.cfg.filters) { const v = fvDefault(F); if (v) S.fv[F.id] = v; } }
 const keyStr = (f, v) => { if (v === null || v === undefined || v === '') return ''; if (f && f.k === 'date') return fmtDate(v, { df: 'dd/mm/yyyy' }); return String(v); };
 function passRow(r, fv) {
   for (const F of S.cfg.filters) {
     const v = fv[F.id]; if (!v) continue; const x = r[F.f], f = S.fIdx.get(F.f);
-    if (F.kind === 'date') { if (v.from || v.to) { const ms = typeof x === 'number' ? x : parseDate(x); if (ms === null) return false; if (v.from && ms < dayStart(v.from)) return false; if (v.to && ms > dayEnd(v.to)) return false; } }
+    if (F.kind === 'day' || F.kind === 'asof') { const iso = F.kind === 'day' ? v.d : v.to; if (iso) { const ms = typeof x === 'number' ? x : parseDate(x); if (ms === null || ms > dayEnd(iso) || (F.kind === 'day' && ms < dayStart(iso))) return false; } }
+    else if (F.kind === 'date') { if (v.from || v.to) { const ms = typeof x === 'number' ? x : parseDate(x); if (ms === null) return false; if (v.from && ms < dayStart(v.from)) return false; if (v.to && ms > dayEnd(v.to)) return false; } }
     else if (F.kind === 'num') { const n = typeof x === 'number' ? x : toNum(x); if (v.from !== '' && v.from !== undefined && (n === null || n < +v.from)) return false; if (v.to !== '' && v.to !== undefined && (n === null || n > +v.to)) return false; }
     else if (F.kind === 'list') { if (v.vals && v.vals.length && !v.vals.includes(keyStr(f, x))) return false; }
     else if (F.kind === 'text') { if (v.q && !fold(keyStr(f, x)).includes(fold(v.q))) return false; }
@@ -563,42 +650,47 @@ function filteredRows() {
   const q = fold(S.q || ''); if (q) { const cols = L().cols; rows = rows.filter((r) => cols.some((c) => fold(fmtVal(c, r[c.f], L())).includes(q))); }
   return rows;
 }
-function firstDateRange(fv) { const F = S.cfg.filters.find((x) => x.kind === 'date'); return (F && fv[F.id]) || { from: '', to: '' }; }
-function subVars(s, nRows, fv) {
-  const r = firstDateRange(fv), d = (iso) => (iso ? fmtDate(dayStart(iso), L()) : '…');
-  return String(s || '').replace(/\{TU_NGAY\}/g, d(r.from)).replace(/\{DEN_NGAY\}/g, d(r.to)).replace(/\{HOM_NAY\}/g, fmtDate(Date.now(), L())).replace(/\{SO_DONG\}/g, String(nRows));
-}
 const PADS = { S: 1, M: 3, L: 6 };
-// Dòng "Từ ngày … đến ngày …" lấy theo bộ lọc ngày đã chọn
-function dateFilterOf(lay) { if (!lay.dl) return null; return lay.dl === 'auto' ? S.cfg.filters.find((x) => x.kind === 'date') : S.cfg.filters.find((x) => x.id === lay.dl && x.kind === 'date'); }
-function dateLineText(lay, fv, design) {
-  const F = dateFilterOf(lay); if (!F) return null;
-  let v = fv[F.id] || {}; if (design && !v.from && !v.to) v = presetRange('month');
-  const d = (iso) => fmtDate(dayStart(iso), lay);
-  if (v.from && v.to) return `Từ ngày ${d(v.from)} đến ngày ${d(v.to)}`; if (v.from) return `Từ ngày ${d(v.from)}`; if (v.to) return `Đến ngày ${d(v.to)}`; return null;
+/* ---- Dòng tự do trên / dưới báo cáo: chữ + biến {Khoảng ngày}, {Từ ngày}, {Đến ngày}, {Hôm nay}, {Số dòng}, [Tên cột] ---- */
+const TOKEN_RE = /\{(Khoảng ngày|Từ ngày|Đến ngày|Hôm nay|Số dòng)\}|\[([^\]]+)\]/g;
+function fieldByRef(ref) { if (ref.startsWith('#')) return S.fIdx.get(ref.slice(1)) || null; const k = fold(ref); return S.fields.find((f) => fold(f.name) === k) || null; }
+function dateFilterRange(fv) {
+  const F = S.cfg.filters.find((x) => DATE_KINDS.has(x.kind)); if (!F) return null; const v = fv[F.id] || {};
+  if (F.kind === 'day') return v.d ? { kind: 'day', from: v.d, to: v.d } : null;
+  if (F.kind === 'asof') return v.to ? { kind: 'asof', from: '', to: v.to } : null;
+  return v.from || v.to ? { kind: 'date', from: v.from || '', to: v.to || '' } : null;
 }
-function noteValue(n, rows) {
-  const out = []; for (const r of srcRows(rows)) { const x = r[n.f]; if (x === null || x === undefined || x === '') continue; const t = keyStr(S.fIdx.get(n.f), x); if (!out.includes(t)) out.push(t); if (n.how !== 'all' || out.length >= 10) break; }
-  return out.join(', ');
+function colValues(f, rows) { const out = []; for (const r of srcRows(rows)) { const x = r[f.id]; if (x === null || x === undefined || x === '') continue; const t = keyStr(f, x); if (!out.includes(t)) out.push(t); if (out.length >= 5) break; } return out.join(', '); }
+// Thay biến trong 1 dòng; trả null nếu dòng có biến mà biến nào cũng rỗng (dòng tự ẩn)
+function lineText(text, rows, fv, lay) {
+  let toks = 0, filled = 0; const r = dateFilterRange(fv), d = (iso) => (iso ? fmtDate(dayStart(iso), lay) : '');
+  const out = String(text || '').replace(TOKEN_RE, (m, v, ref) => {
+    toks++; let x = '';
+    if (v === 'Khoảng ngày' && r) x = r.kind === 'day' ? `Ngày ${d(r.from)}` : r.kind === 'asof' ? `Đến ngày ${d(r.to)}` : r.from && r.to ? `Từ ngày ${d(r.from)} đến ngày ${d(r.to)}` : r.from ? `Từ ngày ${d(r.from)}` : `Đến ngày ${d(r.to)}`;
+    else if (v === 'Từ ngày' && r) x = d(r.from); else if (v === 'Đến ngày' && r) x = d(r.to);
+    else if (v === 'Hôm nay') x = fmtDate(Date.now(), lay); else if (v === 'Số dòng') x = srcRows(rows).length.toLocaleString('vi-VN');
+    else if (ref) { const f = fieldByRef(ref); x = f ? colValues(f, rows) : ''; }
+    if (x) filled++; return x;
+  });
+  return toks && !filled ? null : out;
 }
-// Các dòng dưới tiêu đề: khoảng ngày + ghi chú (từ cột hoặc nhập tay)
-function headLines(lay, rows, fv, design) {
-  const out = [], dl = dateLineText(lay, fv, design);
-  if (dl) out.push({ tg: 'sub', cls: 'rs', text: dl });
-  for (const n of lay.notes || []) {
-    if (n.t === 'field') {
-      if (!S.fIdx.has(n.f)) continue;
-      if (design) { out.push({ tg: 'note', cls: 'rn', text: (n.label || '') + '‹' + fName(n.f) + '›', ph: true }); continue; }
-      const v = noteValue(n, rows); if (v) out.push({ tg: 'note', cls: 'rn', text: (n.label || '') + v });
-    } else if (design) out.push({ tg: 'note', cls: 'rn', text: n.text || '', ed: 'note:' + n.id });
-    else if (n.text) out.push({ tg: 'note', cls: 'rn', text: subVars(n.text, srcRows(rows).length, fv) });
-  }
-  return out;
+// Trong khung thiết kế hiện tên cột thay cho mã [#id]
+const lineEditText = (t) => String(t || '').replace(/\[#([^\]]+)\]/g, (m, id) => (S.fIdx.has(id) ? '[' + fName(id) + ']' : m));
+function lineFieldIds(lines) { const ids = []; for (const ln of lines || []) String(ln.text || '').replace(TOKEN_RE, (m, v, ref) => { if (ref) { const f = fieldByRef(ref); if (f) ids.push(f.id); } return m; }); return ids; }
+function linesHTML(lay, pos, rows, fv, design, tw) {
+  const list = lay[pos] || []; let h = '';
+  list.forEach((ln) => {
+    const sel = design && S.tgt === 'line' && S.tgtLine === ln.id ? ' tsel' : '';
+    if (design) h += `<div class="rline${sel}" data-line="${pos}:${ln.id}" style="${css(Object.assign({ al: 'c' }, ln.s))}"><span class="lt" contenteditable="true" spellcheck="false" data-ed="line:${pos}:${ln.id}">${esc(lineEditText(ln.text))}</span><span class="lbar" contenteditable="false"><button data-la="ins" title="Chèn biến / giá trị cột">Chèn ▾</button><button data-la="del" title="Xóa dòng" aria-label="Xóa dòng">${svg('x')}</button></span></div>`;
+    else { const t = lineText(ln.text, rows, fv, lay); if (t !== null && t !== '') h += `<div class="rline" style="${css(Object.assign({ al: 'c' }, ln.s))}">${esc(t)}</div>`; }
+  });
+  if (design) h += `<button class="laddbtn" data-ladd="${pos}">+ Thêm dòng ${pos === 'top' ? 'dưới tiêu đề' : 'cuối báo cáo'}</button>`;
+  return h;
 }
 function filterLines(fv) {
   const out = [];
   for (const F of S.cfg.filters) {
-    const v = fv[F.id]; if (!v || F.kind === 'date') continue; const lb = F.label || fName(F.f);
+    const v = fv[F.id]; if (!v || DATE_KINDS.has(F.kind)) continue; const lb = F.label || fName(F.f);
     if (F.kind === 'list' && v.vals && v.vals.length) out.push(lb + ': ' + (v.vals.length > 4 ? v.vals.slice(0, 4).join(', ') + ` … (+${v.vals.length - 4})` : v.vals.join(', ')));
     else if (F.kind === 'text' && v.q) out.push(lb + ': ' + v.q);
     else if (F.kind === 'num' && (v.from || v.to)) out.push(lb + ': ' + (v.from || '…') + ' → ' + (v.to || '…'));
@@ -678,11 +770,11 @@ function demoRows(lay) {
     }
     out.push(r);
   }
-  return out;
+  return computeCalcs(out);
 }
 
 /* ---------------- vẽ báo cáo ---------------- */
-function reportHTML(lay, rows, mode, fv) {
+function reportHTML(lay, rows, mode, fv, availW) {
   const design = mode === 'design', print = mode === 'print' || mode === 'xls', allOpen = mode === 'xls' || design;
   const ci = lay.cols.map((c, i) => i).filter((i) => S.fIdx.has(lay.cols[i].f));
   const groups = (lay.groups || []).filter((g) => S.fIdx.has(g.f));
@@ -693,13 +785,14 @@ function reportHTML(lay, rows, mode, fv) {
   let h = `<div class="rpt ${design ? 'design' : 'view'}" style="font-family:'${esc(lay.font)}',serif;font-size:${fs}px;--grid:${lay.grid};--pad:${PADS[lay.pad] || 3}px">`;
   if (design) h += `<div class="dnote">Dòng dữ liệu là minh họa — báo cáo thật chỉ đọc dữ liệu khi người xem bấm <b>Báo cáo</b>.</div>`;
   h += `<div class="rh"><div class="rt${sel('title')}" data-tg="title" style="${css(sty.title)}"${ed('title')}>${esc(lay.title)}</div>`;
-  for (const ln of headLines(lay, rows, fv, design)) h += `<div class="${ln.cls}${sel(ln.tg)}" data-tg="${ln.tg}" style="${css(sty[ln.tg])}"${ln.ed ? ed(ln.ed) : ''}>${ln.ph ? `<span class="ph">${esc(ln.text)}</span>` : esc(ln.text)}</div>`;
+  h += linesHTML(lay, 'top', rows, fv, design);
   if (lay.showF && !design) for (const t of filterLines(fv)) h += `<div class="rfl">${esc(t)}</div>`;
   h += `</div>`;
-  if (!ci.length) return h + `<div class="empty">${design ? 'Chưa có cột nào. Tick cột ở mục <b>2 · Cột dữ liệu</b> bên trái.' : 'Báo cáo chưa có cột.'}</div></div>`;
+  if (!ci.length) return h + `<div class="empty">${design ? 'Chưa có cột nào. Tick cột ở mục <b>2 · Cột hiển thị</b> bên trái.' : 'Báo cáo chưa có cột.'}</div></div>`;
   const cols = ci.map((i) => lay.cols[i]);
-  const widths = (lay.showNo ? [42] : []).concat(cols.map((c) => Math.max(30, +c.w || 120)));
-  const tw = widths.reduce((a, b) => a + b, 0);
+  let widths = (lay.showNo ? [42] : []).concat(cols.map((c) => Math.max(30, +c.w || 120)));
+  let tw = widths.reduce((a, b) => a + b, 0);
+  if (!design && lay.fit !== false && availW > tw) { const fixed = lay.showNo ? 42 : 0, k = (availW - fixed) / (tw - fixed); widths = widths.map((w, i) => (i === 0 && lay.showNo ? w : Math.floor(w * k))); tw = widths.reduce((a, b) => a + b, 0); } // giãn cột vừa khung
   const hs = css(sty.head), off = lay.showNo ? 1 : 0;
   const nFz = +lay.freeze > 0 ? Math.min(widths.length, off + +lay.freeze) : 0, lefts = []; widths.reduce((a, w, i) => ((lefts[i] = a), a + w), 0);
   const fz = (pos) => (pos < nFz && !print ? { c: ' fz', s: `left:${lefts[pos]}px;` } : { c: '', s: '' }); // neo cố định cột
@@ -707,13 +800,15 @@ function reportHTML(lay, rows, mode, fv) {
   const hasG = cols.some((c) => c.g);
   let r1 = '', r2 = '';
   if (lay.showNo) r1 += `<th rowspan="${hasG ? 2 : 1}" data-tg="head" class="${fz(0).c}" style="${hs}${fz(0).s}">STT</th>`;
-  const th = (k, rs) => { const i = ci[k], c = lay.cols[i], z = fz(off + k); return `<th data-ci="${i}"${rs > 1 ? ` rowspan="${rs}"` : ''} class="${design && S.selCol === i && S.tgt === 'col' ? 'sel' : ''}${z.c}"${design ? ' draggable="true"' : ''} style="${hs}${z.s}"><span class="hl">${esc(c.h || fName(c.f))}</span>${design ? `<i class="grip" data-ci="${i}"></i>` : ''}</th>`; };
+  const th = (k, rs) => { const i = ci[k], c = lay.cols[i], z = fz(off + k); return `<th data-ci="${i}"${rs > 1 ? ` rowspan="${rs}"` : ''} class="${design && S.selCol === i && S.tgt === 'col' ? 'sel' : ''}${z.c}"${mode === 'view' || design ? ' draggable="true"' : ''} style="${hs}${z.s}"><span class="hl">${esc(c.h || fName(c.f))}</span>${design ? `<i class="grip" data-ci="${i}"></i>` : ''}</th>`; };
   for (let k = 0; k < cols.length;) {
     const c = cols[k];
     if (hasG && c.g) { let j = k; while (j + 1 < cols.length && cols[j + 1].g === c.g) j++; const z = off + j < nFz ? fz(off + k) : fz(1e9); r1 += `<th colspan="${j - k + 1}" data-tg="head" class="${z.c}" style="${hs}${z.s}"${design ? ` contenteditable="true" spellcheck="false" data-ed="grp:${ci[k]}:${j - k + 1}"` : ''}>${esc(c.g)}</th>`; for (let x = k; x <= j; x++) r2 += th(x, 1); k = j + 1; }
     else { r1 += th(k, hasG ? 2 : 1); k++; }
   }
-  h += `<tr class="h1">${r1}</tr>` + (hasG ? `<tr class="h2">${r2}</tr>` : '') + `</thead><tbody>`;
+  // Khung thiết kế: hàng nhỏ phía trên ghi tên cột nguồn (như Bravo)
+  const srcRow = design ? `<tr class="hsrc">${lay.showNo ? '<th></th>' : ''}${cols.map((c, k) => { const f = S.fIdx.get(c.f); return `<th data-ci="${ci[k]}" title="Cột nguồn">${f && f.calc ? 'ƒx ' : ''}${esc(f ? f.name : '')}</th>`; }).join('')}</tr>` : '';
+  h += srcRow + `<tr class="h1">${r1}</tr>` + (hasG ? `<tr class="h2">${r2}</tr>` : '') + `</thead><tbody>`;
   if (!design && mode === 'view' && !S.ran) {
     h += `<tr class="more"><td colspan="${widths.length}">${S.loading ? 'Đang đọc dữ liệu…' : 'Chọn điều kiện lọc ở khung bên trái rồi bấm <b>Báo cáo</b> để xem dữ liệu.'}</td></tr></tbody></table></div>`;
     return h;
@@ -765,13 +860,14 @@ function reportHTML(lay, rows, mode, fv) {
   h += `</tbody>`;
   if (lay.total) {
     const tS = css(sty.total, true), lb = esc(lay.totalLabel || 'Tổng cộng:') + (aggK < 0 ? ` ${nRows.toLocaleString('vi-VN')} dòng` : '');
-    h += `<tbody class="tot"><tr class="tt${sel('total')}" data-tg="total"><td colspan="${span}" class="${z0.c}" style="${tS}${z0.s}text-align:${AL[sty.total.al || 'r']}">${lb}</td>${tailCells(rows, tS, true)}</tr></tbody>`;
+    h += `<tbody class="tot"><tr class="tt${sel('total')}" data-tg="total"><td colspan="${span}" class="${z0.c}" style="${tS}${z0.s}text-align:${AL[sty.total.al || 'r']}"${design ? ` contenteditable="true" spellcheck="false" data-ed="total"` : ''}>${lb}</td>${tailCells(rows, tS, true)}</tr></tbody>`;
   }
   h += `</table>`;
+  h += `<div class="rbot" style="width:${tw}px">${linesHTML(lay, 'bottom', rows, fv, design)}</div>`;
   const F = lay.foot;
   if (F.show) {
     const slot = (k, ks, date) => `<div>${date ? `<span class="rd">Ngày ..... tháng ..... năm .......</span>` : ''}<b${ed('foot.' + k)}>${esc(F[k])}</b><i${ed('foot.' + ks)}>${esc(F[ks])}</i></div>`;
-    h += `<div class="rfoot${sel('foot')}" data-tg="foot" style="width:${tw}px;margin-left:auto;margin-right:auto;${css(sty.foot)}">${slot('l', 'ls')}${slot('c', 'cs')}${slot('r', 'rs', F.date)}</div>`;
+    h += `<div class="rfoot${sel('foot')}" data-tg="foot" style="width:${tw}px;${css(sty.foot)}">${slot('l', 'ls')}${slot('c', 'cs')}${slot('r', 'rs', F.date)}</div>`;
   }
   return h + `</div>`;
 }
@@ -781,8 +877,9 @@ function render() {
   const lay = L(), t0 = performance.now(), design = S.tab === 'design';
   const rows = design ? demoRows(lay) : filteredRows();
   const st = $('stage'), sx = st.scrollLeft, sy = st.scrollTop;
-  $('sheet').innerHTML = reportHTML(lay, rows, design ? 'design' : 'view', S.ran ? S.fvRun : S.fv);
-  $('sheet').style.zoom = design ? 1 : S.zoom;
+  const z = design ? 1 : S.zoom, availW = Math.floor((st.clientWidth - 28 - 38) / z);
+  $('sheet').innerHTML = gbarHTML(lay) + reportHTML(lay, rows, design ? 'design' : 'view', S.ran ? S.fvRun : S.fv, availW);
+  $('sheet').style.zoom = z;
   st.scrollLeft = sx; st.scrollTop = sy;
   fixSticky(); S.ms = performance.now() - t0;
   const tot = S.rows.length;
@@ -791,11 +888,16 @@ function render() {
   renderLayoutTabs();
   if (design) syncRibbon(); else renderLevels();
 }
+// Thanh nhóm phía trên báo cáo: kéo tiêu đề cột vào để nhóm, bấm chip để chỉnh cấp nhóm
+const BY_NAME = { '': 'theo ngày', month: 'theo tháng', quarter: 'theo quý', year: 'theo năm' };
+function gbarHTML(lay) {
+  const gs = lay.groups.filter((g) => S.fIdx.has(g.f));
+  const chips = gs.map((g, i) => { const f = S.fIdx.get(g.f); return `<span class="gchip" data-gl="${lay.groups.indexOf(g)}" title="Bấm để chỉnh cấp nhóm này"><b>${i + 1}</b>${esc(f.name)}${f.k === 'date' ? ' · ' + BY_NAME[g.by || ''] : ''}${g.d ? ' · Z→A' : ''}<button class="x" data-gx="${lay.groups.indexOf(g)}" aria-label="Bỏ nhóm ${esc(f.name)}">×</button></span>`; }).join('<span class="gsep">›</span>');
+  return `<div class="gbar" id="gbar"><span>Nhóm theo:</span>${chips || '<span>Kéo tiêu đề cột vào đây (hoặc chuột phải → Nhóm theo cột) để gom nhóm</span>'}${S.tab === 'view' ? '<span style="color:#a65400">· chỉnh ở đây chỉ áp dụng cho lần xem này</span>' : ''}<button class="gopt" id="gOptBtn">Tùy chọn nhóm &amp; tổng ▾</button></div>`;
+}
 function fixSticky() {
-  const h1 = $('sheet').querySelector('thead tr.h1'), h2 = $('sheet').querySelector('thead tr.h2');
-  const top = -parseFloat(getComputedStyle($('stage')).paddingTop || '0');
-  $('sheet').querySelectorAll('thead th').forEach((x) => { x.style.top = top + 'px'; });
-  if (h1 && h2) { const hh = h1.getBoundingClientRect().height / (S.tab === 'view' ? S.zoom : 1); h2.querySelectorAll('th').forEach((x) => { x.style.top = (top + hh) + 'px'; }); }
+  const z = S.tab === 'view' ? S.zoom : 1, top0 = -parseFloat(getComputedStyle($('stage')).paddingTop || '0') + ($('gbar') ? $('gbar').offsetHeight : 0);
+  let acc = top0; $('sheet').querySelectorAll('thead tr').forEach((tr) => { tr.querySelectorAll('th').forEach((x) => { x.style.top = acc + 'px'; }); acc += tr.getBoundingClientRect().height / z; });
 }
 
 /* ---------------- tab mẫu báo cáo ---------------- */
@@ -829,25 +931,97 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('menu'
 
 /* ---------------- tương tác trên bảng ---------------- */
 const sheet = $('sheet');
+// Bấm vào nhóm: dấu +/− mở/thu nhóm đó; Ctrl (⌘) + bấm: mở/thu MỌI nhóm cùng cấp
+function toggleGroup(gr, all) {
+  const k = gr.dataset.k, lv = +gr.className.match(/g(\d+)/)[1], lay = L();
+  const cur = S.open[k] !== undefined ? S.open[k] : lv < (+lay.open);
+  if (!all) { S.open[k] = !cur; render(); return; }
+  let rows = filteredRows(); if (lay.mode === 'sum') rows = summarize(rows, lay);
+  const walk = (nodes, l) => { for (const n of nodes || []) { if (l === lv) S.open[n.key] = !cur; else walk(n.kids, l + 1); } };
+  walk(buildTree(rows, lay.groups.filter((g) => S.fIdx.has(g.f)), 0, '', lay), 0); render();
+}
+function groupOptItems(lay) {
+  return [
+    { t: 'Hiện số tổng ở dòng nhóm', ck: !!lay.gSub, fn: () => apply((l) => { l.gSub = !l.gSub; }) },
+    { t: 'Đánh số nhóm 1. / 1.1', ck: !!lay.gNum, fn: () => apply((l) => { l.gNum = !l.gNum; }) },
+    { t: 'Hiện số dòng của nhóm', ck: !!lay.gCnt, fn: () => apply((l) => { l.gCnt = !l.gCnt; }) },
+    { t: 'IN HOA tên nhóm cấp 1', ck: !!lay.gUp, fn: () => apply((l) => { l.gUp = !l.gUp; }) },
+    { t: 'Khi mở báo cáo hiện', sub: [[0, 'Chỉ nhóm cấp 1'], [1, 'Tới nhóm cấp 2'], [2, 'Tới nhóm cấp 3'], [9, 'Mở hết (cả dòng chi tiết)']].map(([v, t]) => ({ t, ck: +lay.open === v, fn: () => apply((l) => { l.open = v; }) })) },
+    '-',
+    { t: 'Hiện dòng tổng cộng', ck: !!lay.total, fn: () => apply((l) => { l.total = !l.total; }) },
+    { t: 'Gộp các dòng giống nhau thành 1 dòng', ck: lay.mode === 'sum', fn: () => apply((l) => { l.mode = l.mode === 'sum' ? 'detail' : 'sum'; }) },
+  ];
+}
+function levelMenu(x, y, gi) {
+  const lay = L(), g = lay.groups[gi]; if (!g) return; const f = S.fIdx.get(g.f) || {};
+  ctxMenu(x, y, [
+    ...(f.k === 'date' ? [{ t: 'Nhóm ngày', sub: Object.entries(BY_NAME).map(([v, t]) => ({ t: t[0].toUpperCase() + t.slice(1), ck: (g.by || '') === v, fn: () => apply((l) => { l.groups[gi].by = v; }) })) }] : []),
+    { t: 'Thứ tự nhóm A → Z', ck: !g.d, fn: () => apply((l) => { l.groups[gi].d = false; }) },
+    { t: 'Thứ tự nhóm Z → A', ck: !!g.d, fn: () => apply((l) => { l.groups[gi].d = true; }) },
+    '-',
+    { t: 'Lên cấp trên', dis: gi === 0, fn: () => apply((l) => { const [x2] = l.groups.splice(gi, 1); l.groups.splice(gi - 1, 0, x2); }) },
+    { t: 'Xuống cấp dưới', dis: gi >= lay.groups.length - 1, fn: () => apply((l) => { const [x2] = l.groups.splice(gi, 1); l.groups.splice(gi + 1, 0, x2); }) },
+    '-', { t: 'Bỏ nhóm này', fn: () => apply((l) => { l.groups.splice(gi, 1); }) },
+  ]);
+}
+function addLine(pos) { const lay = L(); (lay[pos] = lay[pos] || []).push({ id: uid(), text: '', s: { al: 'c' } }); changed(); setTimeout(() => { const els = sheet.querySelectorAll(`[data-line^="${pos}:"] .lt`); const el = els[els.length - 1]; if (el) el.focus(); }, 30); }
+let caret = null; // vị trí con trỏ cuối cùng trong 1 dòng tự do (để chèn biến)
+document.addEventListener('selectionchange', () => { const sel = getSelection(); if (!sel.rangeCount) return; const n = sel.anchorNode && (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement); const lt = n && n.closest && n.closest('.rpt .lt'); if (!lt) return; const r = document.createRange(); r.selectNodeContents(lt); try { r.setEnd(sel.anchorNode, sel.anchorOffset); caret = { ed: lt.dataset.ed, off: r.toString().length }; } catch (e) {} });
+// Chèn biến vào nội dung dòng (sửa thẳng dữ liệu mẫu, rồi vẽ lại)
+const lineNorm = (t) => String(t || '').normalize('NFC').replace(/\s+/g, ' ').replace(/^ /, ''); // giữ dấu cách cuối dòng để chèn biến liền sau
+function insertToken(lineEl, tok) {
+  const key = lineEl.dataset.line, [pos, id] = key.split(':'), ln = (L()[pos] || []).find((x) => x.id === id); if (!ln) return;
+  const live = sheet.querySelector(`[data-line="${key}"] .lt`), t = live && document.activeElement === live ? lineNorm(live.textContent) : lineEditText(ln.text);
+  const off = caret && caret.ed === 'line:' + key ? Math.min(caret.off, t.length) : t.length;
+  ln.text = t.slice(0, off) + tok + t.slice(off); caret = { ed: 'line:' + key, off: off + tok.length }; changed();
+}
+function tokenMenu(x, y, lineEl) {
+  const cols = S.fields;
+  ctxMenu(x, y, [
+    { h: 'Theo bộ lọc ngày' },
+    { t: 'Khoảng ngày (Từ ngày … đến ngày …)', fn: () => insertToken(lineEl, '{Khoảng ngày}') },
+    { t: 'Từ ngày', fn: () => insertToken(lineEl, '{Từ ngày}') }, { t: 'Đến ngày', fn: () => insertToken(lineEl, '{Đến ngày}') },
+    { t: 'Hôm nay', fn: () => insertToken(lineEl, '{Hôm nay}') }, { t: 'Số dòng', fn: () => insertToken(lineEl, '{Số dòng}') },
+    '-', { t: 'Giá trị của cột', sub: cols.map((f) => ({ t: f.name, fn: () => insertToken(lineEl, '[' + f.name + ']') })) },
+  ]);
+}
 sheet.addEventListener('click', (e) => {
   if (e.target.id === 'btnMoreRows') { S.cap += VIEW_CAP; render(); return; }
-  if (S.tab !== 'design') { const gr = e.target.closest('tr.gr'); if (gr) { const k = gr.dataset.k, lv = +gr.className.match(/g(\d+)/)[1]; const cur = S.open[k] !== undefined ? S.open[k] : lv < (+L().open); S.open[k] = !cur; render(); } return; }
+  // thanh nhóm
+  const gx = e.target.closest('[data-gx]'); if (gx) { apply((l) => { l.groups.splice(+gx.dataset.gx, 1); }); return; }
+  const gc = e.target.closest('.gchip'); if (gc) { const r = gc.getBoundingClientRect(); levelMenu(r.left, r.bottom + 4, +gc.dataset.gl); return; }
+  if (e.target.closest('#gOptBtn')) { const r = e.target.closest('#gOptBtn').getBoundingClientRect(); ctxMenu(r.right - 260, r.bottom + 4, [...(S.tab === 'view' ? [{ h: 'Chỉ áp dụng cho lần xem này' }] : []), ...groupOptItems(L())]); return; }
+  const gr = e.target.closest('tr.gr');
+  if (gr && S.tab !== 'design') { if (e.target.closest('.tg') || e.ctrlKey || e.metaKey || e.detail >= 1) toggleGroup(gr, e.ctrlKey || e.metaKey); return; }
+  if (S.tab !== 'design') return;
+  // dòng tự do
+  const la = e.target.closest('[data-la]');
+  if (la) { const line = la.closest('.rline'), [pos, id] = line.dataset.line.split(':'); if (la.dataset.la === 'del') { L()[pos] = L()[pos].filter((x) => x.id !== id); if (S.tgtLine === id) S.tgt = 'title'; changed(); } else { const r = la.getBoundingClientRect(); tokenMenu(r.left, r.bottom + 4, line); } return; }
+  const ladd = e.target.closest('[data-ladd]'); if (ladd) { addLine(ladd.dataset.ladd); return; }
+  const line = e.target.closest('.rline'); if (line) { const id = line.dataset.line.split(':')[1]; if (S.tgt !== 'line' || S.tgtLine !== id) { S.tgt = 'line'; S.tgtLine = id; line.classList.add('tsel'); sheet.querySelectorAll('.tsel').forEach((x) => x !== line && x.classList.remove('tsel')); syncRibbon(); } return; }
   const cell = e.target.closest('th[data-ci],td[data-ci]');
-  if (cell && !e.target.classList.contains('grip')) { selectTgt('col', +cell.dataset.ci); if (cell.tagName === 'TH') setTimeout(() => $('rH').focus(), 0); return; }
+  if (cell && !e.target.classList.contains('grip')) { selectTgt('col', +cell.dataset.ci); return; }
   const tg = e.target.closest('[data-tg]'); if (tg) selectTgt(tg.dataset.tg);
+});
+// Bấm đúp tiêu đề cột (thiết kế) → đổi tên ngay trên mẫu
+sheet.addEventListener('dblclick', (e) => {
+  if (S.tab !== 'design') return; const th = e.target.closest('tr.h1 th[data-ci], tr.h2 th[data-ci]'); if (!th) return;
+  const hl = th.querySelector('.hl'); th.draggable = false; hl.contentEditable = 'true'; hl.dataset.ed = 'h:' + th.dataset.ci; hl.focus();
+  const r = document.createRange(); r.selectNodeContents(hl); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
 });
 function selectTgt(t, ci) { const changedT = S.tgt !== t || (t === 'col' && S.selCol !== ci); S.tgt = t; if (t === 'col') S.selCol = ci; if (changedT) { render(); renderColList(); } }
 sheet.addEventListener('focusout', (e) => {
   const el = e.target.closest && e.target.closest('[data-ed]'); if (!el || S.tab !== 'design') return;
-  const k = el.dataset.ed, v = norm(el.textContent), lay = L();
-  const nt = k.startsWith('note:') ? (lay.notes || []).find((n) => n.id === k.slice(5)) : null;
-  const old = k === 'title' ? lay.title : nt ? nt.text : k.startsWith('foot.') ? lay.foot[k.slice(5)] : null; if (old !== null && old === v) return;
-  if (k === 'title') lay.title = v; else if (nt) nt.text = v;
-  else if (k.startsWith('foot.')) lay.foot[k.slice(5)] = v;
+  const k = el.dataset.ed, lay = L(), v = k.startsWith('line:') ? lineNorm(el.textContent) : norm(el.textContent);
+  if (k === 'title') { if (lay.title === v) return; lay.title = v; }
+  else if (k === 'total') { if (lay.totalLabel === v) return; lay.totalLabel = v; }
+  else if (k.startsWith('h:')) { const c = lay.cols[+k.slice(2)]; if (!c || c.h === v) { render(); return; } c.h = v || fName(c.f); }
+  else if (k.startsWith('line:')) { const [, pos, id] = k.split(':'); const ln = (lay[pos] || []).find((x) => x.id === id); if (!ln || lineEditText(ln.text) === v) return; ln.text = v; }
+  else if (k.startsWith('foot.')) { if (lay.foot[k.slice(5)] === v) return; lay.foot[k.slice(5)] = v; }
   else if (k.startsWith('grp:')) { const [, i, n] = k.split(':').map(Number); const og = lay.cols[i].g; if (og === v) return; let left = +n; for (let x = i; x < lay.cols.length && left > 0; x++) if (lay.cols[x].g === og) { lay.cols[x].g = v; left--; } }
-  setTimeout(() => changed(), 0); // vẽ lại sau khi ô mất focus xong (tránh lỗi DOM khi đang blur)
+  setTimeout(() => changed(true), 0); // vẽ lại sau khi ô mất focus xong (tránh lỗi DOM khi đang blur)
 });
-sheet.addEventListener('keydown', (e) => { if (e.target.closest('[data-ed]') && e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
+sheet.addEventListener('keydown', (e) => { const ed = e.target.closest('[data-ed]'); if (!ed) return; if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } if (e.key === 'Escape' && ed.dataset.ed.startsWith('h:')) { render(); } });
 sheet.addEventListener('pointerdown', (e) => {
   const g = e.target.closest('.grip'); if (!g || S.tab !== 'design') return;
   e.preventDefault(); e.stopPropagation();
@@ -859,11 +1033,21 @@ sheet.addEventListener('pointerdown', (e) => {
   const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); document.body.classList.remove('coldrag'); changed(); };
   document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up);
 });
+// Kéo tiêu đề cột: thả lên cột khác để đổi chỗ (thiết kế), thả lên thanh "Nhóm theo" để gom nhóm
 let dragCi = -1;
-sheet.addEventListener('dragstart', (e) => { const th = e.target.closest('th[data-ci]'); if (!th || S.tab !== 'design') return; dragCi = +th.dataset.ci; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', 'col'); } catch (x) {} });
-sheet.addEventListener('dragover', (e) => { const th = e.target.closest('th[data-ci]'); if (!th || dragCi < 0) return; e.preventDefault(); sheet.querySelectorAll('th.drop').forEach((x) => x.classList.remove('drop')); th.classList.add('drop'); });
-sheet.addEventListener('drop', (e) => { const th = e.target.closest('th[data-ci]'); if (!th || dragCi < 0) return; e.preventDefault(); moveCol(dragCi, +th.dataset.ci); dragCi = -1; });
-sheet.addEventListener('dragend', () => { dragCi = -1; sheet.querySelectorAll('th.drop').forEach((x) => x.classList.remove('drop')); });
+sheet.addEventListener('dragstart', (e) => { const th = e.target.closest('th[data-ci]'); if (!th) return; dragCi = +th.dataset.ci; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', 'col'); } catch (x) {} });
+sheet.addEventListener('dragover', (e) => {
+  if (dragCi < 0) return; const gb = e.target.closest('#gbar');
+  sheet.querySelectorAll('.drop').forEach((x) => x.classList.remove('drop'));
+  if (gb) { e.preventDefault(); gb.classList.add('drop'); return; }
+  const th = e.target.closest('th[data-ci]'); if (!th || S.tab !== 'design') return; e.preventDefault(); th.classList.add('drop');
+});
+sheet.addEventListener('drop', (e) => {
+  if (dragCi < 0) return; const from = dragCi; dragCi = -1; sheet.querySelectorAll('.drop').forEach((x) => x.classList.remove('drop'));
+  if (e.target.closest('#gbar')) { e.preventDefault(); const c = L().cols[from]; if (c && !L().groups.some((g) => g.f === c.f)) apply((l) => { l.groups.push({ f: c.f, d: false, by: colKind(c) === 'date' ? 'month' : '' }); }); return; }
+  const th = e.target.closest('th[data-ci]'); if (!th || S.tab !== 'design') return; e.preventDefault(); moveCol(from, +th.dataset.ci);
+});
+sheet.addEventListener('dragend', () => { dragCi = -1; sheet.querySelectorAll('.drop').forEach((x) => x.classList.remove('drop')); });
 function moveCol(from, to) { const cs = L().cols; if (from === to || from < 0 || to < 0 || to >= cs.length) return; const [c] = cs.splice(from, 1); cs.splice(to, 0, c); if (S.tgt === 'col') S.selCol = to; changed(true); }
 
 /* ---------------- menu chuột phải (kiểu Bravo) ---------------- */
@@ -931,6 +1115,7 @@ function colMenu(e, ci) {
     { t: 'Hiện số tổng ở dòng nhóm', ck: !!lay.gSub, dis: !lay.groups.length, fn: () => apply((l) => { l.gSub = !l.gSub; }, true) },
     { t: 'Gộp các dòng giống nhau thành 1 dòng', ck: lay.mode === 'sum', fn: () => apply((l) => { l.mode = l.mode === 'sum' ? 'detail' : 'sum'; }, true) },
   ] });
+  items.push({ t: 'Tùy chọn nhóm & tổng', sub: groupOptItems(lay) });
   items.push({ t: 'Số thứ tự dòng', sub: [{ t: 'Không hiện', ck: !lay.showNo, fn: () => apply((l) => { l.showNo = false; }) }, { t: 'Hiện cột STT', ck: !!lay.showNo, fn: () => apply((l) => { l.showNo = true; }) }] });
   if (c) items.push({ t: 'Gộp ô trùng ở cột này', ck: !!c.mg, fn: () => apply((l) => { l.cols[ci].mg = !l.cols[ci].mg; }, true) });
   items.push('-');
@@ -950,7 +1135,9 @@ function colMenu(e, ci) {
   }
   items.push({ t: 'Kích cỡ tự động tất cả cột', fn: () => apply((l) => l.cols.forEach((_, i) => autoFit(l, i))) });
   items.push({ t: 'Giãn cách dòng', sub: [['S', 'Hẹp'], ['M', 'Vừa'], ['L', 'Rộng']].map(([v, t]) => ({ t, ck: (lay.pad || 'M') === v, fn: () => apply((l) => { l.pad = v; }) })) });
-  if (c && !view) items.push('-', { t: 'Bỏ cột này khỏi báo cáo', fn: () => { L().cols.splice(ci, 1); S.tgt = 'title'; S.selCol = -1; changed(true); } });
+  if (c && !view) items.push('-', { t: 'Đổi tên cột…', fn: () => { const th = sheet.querySelector(`tr.h1 th[data-ci="${ci}"], tr.h2 th[data-ci="${ci}"]`); if (th) th.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); } });
+  if (c && !view && S.fIdx.get(c.f) && S.fIdx.get(c.f).calc) items.push({ t: 'Sửa công thức…', fn: () => calcEditor(c.f) });
+  if (c && !view) items.push({ t: 'Bỏ cột này khỏi báo cáo', fn: () => { L().cols.splice(ci, 1); S.tgt = 'title'; S.selCol = -1; changed(true); } });
   ctxMenu(e.clientX, e.clientY, items);
 }
 sheet.addEventListener('contextmenu', (e) => {
@@ -962,11 +1149,12 @@ sheet.addEventListener('contextmenu', (e) => {
 });
 
 /* ---------------- thanh định dạng ---------------- */
-const TGT_NAME = { title: 'Tiêu đề báo cáo', sub: 'Dòng khoảng ngày', note: 'Dòng ghi chú', head: 'Hàng tiêu đề cột', body: 'Dòng dữ liệu', g0: 'Dòng nhóm cấp 1', g1: 'Dòng nhóm cấp 2+', total: 'Dòng tổng cộng', foot: 'Phần ký tên' };
-function tgtStyle() { if (S.tgt === 'col') { const c = L().cols[S.selCol]; if (!c) return null; c.s = c.s || {}; return c.s; } return L().sty[S.tgt] || null; }
+const TGT_NAME = { title: 'Tiêu đề báo cáo', line: 'Dòng tự do', head: 'Hàng tiêu đề cột', body: 'Dòng dữ liệu', g0: 'Dòng nhóm cấp 1', g1: 'Dòng nhóm cấp 2+', total: 'Dòng tổng cộng', foot: 'Phần ký tên' };
+function curLine() { const lay = L(); return [...(lay.top || []), ...(lay.bottom || [])].find((x) => x.id === S.tgtLine) || null; }
+function tgtStyle() { if (S.tgt === 'col') { const c = L().cols[S.selCol]; if (!c) return null; c.s = c.s || {}; return c.s; } if (S.tgt === 'line') { const ln = curLine(); if (!ln) return null; ln.s = ln.s || {}; if (!ln.s.al) ln.s.al = 'c'; return ln.s; } return L().sty[S.tgt] || null; }
 function syncRibbon() {
   const lay = L(), isCol = S.tgt === 'col' && lay.cols[S.selCol], c = isCol ? lay.cols[S.selCol] : null;
-  if (S.tgt === 'col' && !c) S.tgt = 'title';
+  if ((S.tgt === 'col' && !c) || (S.tgt === 'line' && !curLine())) S.tgt = 'title';
   $('rTgtName').textContent = c ? 'cột ' + (c.h || fName(c.f)) : (TGT_NAME[S.tgt] || '');
   const s = tgtStyle() || {};
   $('rFont').value = lay.font;
@@ -991,7 +1179,7 @@ $('rB').onclick = () => toggleS('b'); $('rI').onclick = () => toggleS('i');
 $('rU').onclick = () => { const s = tgtStyle(); if (s) { s.u = !s.u; changed(); } };
 $('rC').oninput = () => { const s = tgtStyle(); if (s) { s.c = $('rC').value; render(); } }; $('rC').onchange = () => changed();
 $('rBg').oninput = () => { const s = tgtStyle(); if (s) { s.bg = $('rBg').value; render(); } }; $('rBg').onchange = () => changed();
-$('rClr').onclick = () => { if (S.tgt === 'col') { const c = selC(); if (c) { c.s = {}; c.al = ''; } } else L().sty[S.tgt] = clone(defSty()[S.tgt]); changed(); };
+$('rClr').onclick = () => { if (S.tgt === 'col') { const c = selC(); if (c) { c.s = {}; c.al = ''; } } else if (S.tgt === 'line') { const ln = curLine(); if (ln) ln.s = { al: 'c' }; } else L().sty[S.tgt] = clone(defSty()[S.tgt]); changed(); };
 $('rAl').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; const c = selC(); if (c) c.al = c.al === b.dataset.al ? '' : b.dataset.al; else { const s = tgtStyle(); if (s) s.al = b.dataset.al; } changed(); });
 $('rFmt').onchange = () => { const c = selC(); if (c) { c.fmt = $('rFmt').value; changed(); } };
 const dpStep = (d) => { const c = selC(); if (!c) return; const cur = colDp(c, L()); const base = cur === '' ? 0 : +cur; c.dp = Math.max(0, Math.min(6, base + d)); if (!c.fmt && colKind(c) !== 'num') c.fmt = 'num'; changed(); };
@@ -1008,7 +1196,7 @@ $('rOrient').onchange = () => { L().orient = $('rOrient').value; changed(); };
 $('rGrid').oninput = () => { L().grid = $('rGrid').value; render(); }; $('rGrid').onchange = () => changed();
 $('rZebra').onclick = () => { L().zebra = !L().zebra; changed(); };
 // Thiết lập chung (bảng nhỏ)
-const GBIND = [['lNf', 'nf'], ['lDp', 'dp'], ['lNeg', 'neg'], ['lZero', 'zero'], ['lDf', 'df'], ['lFs', 'fs', 'n'], ['lShowF', 'showF', 'c'], ['fShow', 'foot.show', 'c'], ['fDate', 'foot.date', 'c']];
+const GBIND = [['lNf', 'nf'], ['lDp', 'dp'], ['lNeg', 'neg'], ['lZero', 'zero'], ['lDf', 'df'], ['lFs', 'fs', 'n'], ['lShowF', 'showF', 'c'], ['fShow', 'foot.show', 'c'], ['lFit', 'fit', 'c'], ['fDate', 'foot.date', 'c']];
 const getP = (o, p) => p.split('.').reduce((a, k) => (a ? a[k] : undefined), o);
 const setP = (o, p, v) => { const ks = p.split('.'); const last = ks.pop(); ks.reduce((a, k) => a[k], o)[last] = v; };
 function syncGset() { for (const [id, p, t] of GBIND) { const v = getP(L(), p); if (t === 'c') $(id).checked = !!v; else $(id).value = v ?? ''; } }
@@ -1021,10 +1209,43 @@ document.querySelectorAll('.sec h3').forEach((h) => h.addEventListener('click', 
 function newCol(f) { return Object.assign(clone(COLDEF), { f: f.id, h: f.name, w: f.k === 'num' ? 130 : f.k === 'date' ? 90 : Math.min(260, Math.max(110, f.name.length * 8 + 30)), agg: f.k === 'num' && f.type !== FT('AutoNumber', 1005) ? 'sum' : '' }); }
 function renderColList() {
   const lay = L(), on = new Set(lay.cols.map((c) => c.f)), q = fold($('fSearch').value);
-  $('fList').innerHTML = S.fields.filter((f) => !q || fold(f.name).includes(q)).map((f) => `<label class="fitem"><input type="checkbox" data-f="${esc(f.id)}"${on.has(f.id) ? ' checked' : ''}>${tyBadge(f)}<span class="nm" title="${esc(f.name)}">${esc(f.name)}</span></label>`).join('') || '<p class="hint" style="padding:8px">Không thấy cột nào.</p>';
+  $('fList').innerHTML = S.fields.filter((f) => !q || fold(f.name).includes(q)).map((f) => `<label class="fitem"><input type="checkbox" data-f="${esc(f.id)}"${on.has(f.id) ? ' checked' : ''}>${tyBadge(f)}<span class="nm" title="${esc(f.name)}">${esc(f.name)}</span>${f.calc ? `<button class="x" data-calc="${esc(f.id)}" title="Sửa cột công thức" aria-label="Sửa cột công thức ${esc(f.name)}" style="border:0;background:none;padding:0 4px;color:#a65400;font-size:12px">Sửa</button>` : ''}</label>`).join('') || '<p class="hint" style="padding:8px">Không thấy cột nào.</p>';
   $('colCnt').textContent = `${lay.cols.length}/${S.fields.length}`;
 }
 $('fSearch').addEventListener('input', renderColList);
+$('fList').addEventListener('click', (e) => { const b = e.target.closest('[data-calc]'); if (b) { e.preventDefault(); calcEditor(b.dataset.calc); } });
+$('calcAdd').onclick = () => calcEditor(null);
+// Hộp soạn cột công thức
+const FN_HINT = ['IF(điều kiện, đúng, sai)', 'ROUND(số, lẻ)', 'SUM(a, b, …)', 'ABS(số)', 'MIN(…)', 'MAX(…)', 'AND(…)', 'OR(…)', 'IFERROR(giá trị, thay thế)', 'LEFT(chữ, n)', 'RIGHT(chữ, n)', 'UPPER(chữ)', 'YEAR(ngày)', 'MONTH(ngày)', 'DAYS(ngày cuối, ngày đầu)', 'TODAY()', 'CONCAT(…)'];
+function calcEditor(id) {
+  const cur = id ? S.cfg.calcs.find((c) => c.id === id) : null, base = azSort(S.baseFields || []);
+  openModal(cur ? 'Sửa cột công thức' : 'Thêm cột công thức',
+    `<p class="hint" style="margin:0">Cột này chỉ tính và hiện trên báo cáo, không thêm vào Base. Tham chiếu cột bằng <b>[Tên cột]</b>; dùng <b>+ − * / ^ %</b>, nối chữ bằng <b>&amp;</b>, so sánh <b>= &lt;&gt; &lt; &gt;</b>.</p>
+     <div class="row" style="align-items:flex-end"><label class="lbl">Tên cột<input type="text" id="cxName" value="${esc(cur ? cur.name : 'Cột công thức ' + (S.cfg.calcs.length + 1))}"></label>
+     <label class="lbl fit" style="width:130px">Kiểu kết quả<select id="cxK"><option value="num">Số</option><option value="text">Chữ</option><option value="date">Ngày</option></select></label></div>
+     <label class="lbl">Công thức<textarea id="cxExpr" rows="3" style="min-height:70px;font:13px ui-monospace,Consolas,monospace" placeholder="vd. [Số lượng] * [Đơn giá]   hoặc   IF([Thành tiền] > 1000000, &quot;Lớn&quot;, &quot;Nhỏ&quot;)">${esc(cur ? cur.expr : '')}</textarea></label>
+     <div id="cxPrev" class="msg">Gõ công thức để xem thử.</div>
+     <div class="sub">Bấm để chèn cột</div><div class="chips" id="cxCols" style="max-height:110px;overflow:auto">${base.map((f) => `<button data-ins="[${esc(f.name)}]">${esc(f.name)}</button>`).join('')}</div>
+     <div class="sub">Hàm</div><div class="chips" id="cxFns">${FN_HINT.map((t) => `<button data-ins="${esc(t.split('(')[0])}(" title="${esc(t)}">${esc(t.split('(')[0])}</button>`).join('')}</div>`,
+    [...(cur ? [['Xóa cột công thức', () => { if (!confirm('Xóa cột công thức "' + cur.name + '"?')) return; S.cfg.calcs = S.cfg.calcs.filter((c) => c.id !== cur.id); for (const l of S.cfg.layouts) { l.cols = l.cols.filter((c) => c.f !== cur.id); l.groups = l.groups.filter((g) => g.f !== cur.id); l.sort = l.sort.filter((x) => x.f !== cur.id); } S.cfg.filters = S.cfg.filters.filter((F) => F.f !== cur.id); refreshFields(); S.selCol = -1; S.tgt = 'title'; closeModal(); changed(true); }, 'danger']] : []),
+     ['Lưu cột', () => {
+       const name = norm($('cxName').value) || 'Cột công thức', expr = $('cxExpr').value.trim(), k = $('cxK').value;
+       try { compileCalc(expr, cur ? cur.id : null); } catch (e) { $('cxPrev').className = 'msg err'; $('cxPrev').textContent = 'Chưa lưu được: ' + e.message; return; }
+       if (cur) Object.assign(cur, { name, expr, k }); else { const c = { id: 'calc_' + uid(), name, expr, k }; S.cfg.calcs.push(c); refreshFields(); L().cols.push(newCol(S.fIdx.get(c.id))); S.tgt = 'col'; S.selCol = L().cols.length - 1; }
+       refreshFields(); for (const l of S.cfg.layouts) for (const c of l.cols) if (cur && c.f === cur.id && (!c.h || c.h === cur.name)) c.h = name;
+       computeCalcs(S.rows); closeModal(); changed(true);
+     }, 'primary']]);
+  $('cxK').value = cur ? cur.k : 'num';
+  const ta = $('cxExpr'), prev = () => {
+    const el = $('cxPrev'); let cc; try { cc = compileCalc(ta.value, cur ? cur.id : null); } catch (e) { el.className = 'msg err'; el.textContent = e.message; return; }
+    const rows = (S.rows.length ? S.rows : S.sampleRows || []).slice(0, 4), k = $('cxK').value, c = { f: '_', fmt: k === 'num' ? 'num' : k === 'date' ? 'date' : 'text', dp: '' };
+    const vals = rows.map((r) => { let v; try { v = calcOut(k, cc.run(r)); } catch (e) { v = null; } return fmtVal(c, v, L()) || '(trống)'; });
+    el.className = 'msg ok'; el.textContent = vals.length ? 'Thử trên dữ liệu mẫu: ' + vals.join(' · ') : 'Công thức hợp lệ.';
+  };
+  ta.addEventListener('input', debounce(prev, 200)); $('cxK').onchange = prev; if (cur) prev(); ta.focus();
+  const ins = (e) => { const b = e.target.closest('[data-ins]'); if (!b) return; ta.focus(); ta.setRangeText(b.dataset.ins, ta.selectionStart, ta.selectionEnd, 'end'); prev(); };
+  $('cxCols').addEventListener('click', ins); $('cxFns').addEventListener('click', ins);
+}
 $('fList').addEventListener('change', (e) => {
   const id = e.target.dataset.f; if (!id) return; const cs = L().cols;
   if (e.target.checked) { cs.push(newCol(S.fIdx.get(id))); S.tgt = 'col'; S.selCol = cs.length - 1; }
@@ -1033,67 +1254,24 @@ $('fList').addEventListener('change', (e) => {
 });
 $('fAll').onclick = () => { const used = new Set(L().cols.map((c) => c.f)); for (const f of S.fields) if (!used.has(f.id)) L().cols.push(newCol(f)); changed(true); };
 $('fNone').onclick = () => { if (L().cols.length && !confirm('Bỏ tất cả cột khỏi báo cáo?')) return; L().cols = []; S.tgt = 'title'; S.selCol = -1; changed(true); };
-/* ---- 3 · Tiêu đề & ghi chú ---- */
-function renderNotes() {
-  const lay = L(), dfs = S.cfg.filters.filter((F) => F.kind === 'date');
-  $('hDl').innerHTML = `<option value="">Không hiện</option><option value="auto">Theo bộ lọc ngày đầu tiên</option>` + dfs.map((F) => `<option value="${F.id}">Theo bộ lọc: ${esc(F.label || fName(F.f))}</option>`).join('');
-  $('hDl').value = lay.dl === 'auto' || dfs.some((F) => F.id === lay.dl) ? lay.dl : (lay.dl ? 'auto' : '');
-  $('noteList').innerHTML = (lay.notes || []).map((n, i) => n.t === 'field'
-    ? `<div class="lvrow" data-i="${i}"><span class="n">Từ cột</span><select data-k="f" aria-label="Cột lấy ghi chú">${fieldOpts(n.f)}</select><button class="x" data-k="x" aria-label="Bỏ dòng ghi chú">${svg('x')}</button>
-       <input type="text" data-k="label" placeholder="Chữ đứng trước (vd. Ghi chú: )" value="${esc(n.label || '')}" aria-label="Chữ đứng trước">
-       <select class="sm" data-k="how" aria-label="Lấy giá trị nào" title="Lấy giá trị nào trong các dòng đang xem"><option value="first">Giá trị đầu</option><option value="all"${n.how === 'all' ? ' selected' : ''}>Mọi giá trị</option></select></div>`
-    : `<div class="lvrow" data-i="${i}"><span class="n">Nhập tay</span><input type="text" data-k="text" value="${esc(n.text || '')}" placeholder="Nội dung ghi chú" aria-label="Nội dung ghi chú"><button class="x" data-k="x" aria-label="Bỏ dòng ghi chú">${svg('x')}</button></div>`).join('')
-    || '<p class="hint">Chưa có. Ghi chú từ cột lấy giá trị của cột đó trong các dòng đang xem (vd. cột công thức trả về nội dung note).</p>';
-}
-$('hDl').onchange = () => { L().dl = $('hDl').value; changed(); };
-$('noteList').addEventListener('change', (e) => { const row = e.target.closest('.lvrow'); if (!row) return; const n = L().notes[+row.dataset.i], k = e.target.dataset.k; if (!n || !k || k === 'x') return; n[k] = k === 'label' ? e.target.value : e.target.value; changed(); });
-$('noteList').addEventListener('click', (e) => { if (!e.target.closest('[data-k=x]')) return; L().notes.splice(+e.target.closest('.lvrow').dataset.i, 1); changed(true); });
-$('noteAddF').onclick = () => { const f = S.fields.find((x) => /ghi ch|note/i.test(fold(x.name))) || S.fields[0]; if (!f) return; (L().notes = L().notes || []).push({ id: uid(), t: 'field', f: f.id, label: '', how: 'first' }); changed(true); };
-$('noteAddT').onclick = () => { (L().notes = L().notes || []).push({ id: uid(), t: 'text', text: 'Ghi chú: ' }); changed(true); };
-
 const fieldOpts = (sel, pred) => S.fields.filter(pred || (() => true)).map((f) => `<option value="${esc(f.id)}"${f.id === sel ? ' selected' : ''}>${esc(f.name)}</option>`).join('');
-function renderGroups() {
-  const lay = L();
-  $('grpList').innerHTML = lay.groups.map((g, i) => { const f = S.fIdx.get(g.f); const dt = f && f.k === 'date';
-    return `<div class="lvrow" data-i="${i}"><span class="n">Cấp ${i + 1}</span><select data-k="f" aria-label="Cột nhóm cấp ${i + 1}">${fieldOpts(g.f)}</select>${dt ? `<select class="sm" data-k="by" aria-label="Nhóm ngày theo"><option value="">Theo ngày</option><option value="month"${g.by === 'month' ? ' selected' : ''}>Theo tháng</option><option value="quarter"${g.by === 'quarter' ? ' selected' : ''}>Theo quý</option><option value="year"${g.by === 'year' ? ' selected' : ''}>Theo năm</option></select>` : ''}<button data-k="d" title="Thứ tự các nhóm">${g.d ? 'Z→A' : 'A→Z'}</button><button class="x" data-k="x" aria-label="Bỏ cấp nhóm ${i + 1}">${svg('x')}</button></div>`; }).join('');
-  $('grpOpts').hidden = !lay.groups.length;
-  $('gChips').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', lay[b.dataset.k] ? 'true' : 'false'));
-  $('gOpen').value = String(lay.open); $('gTotal').checked = !!lay.total; if (document.activeElement !== $('gTotalLbl')) $('gTotalLbl').value = lay.totalLabel;
-}
-function lvHandler(listKey) {
-  return (e) => {
-    const row = e.target.closest('.lvrow'); if (!row) return; const arr = L()[listKey], it = arr[+row.dataset.i], t = e.target.closest('[data-k]'); if (!it || !t) return; const k = t.dataset.k;
-    if (e.type === 'change' && k === 'f') { it.f = t.value; it.by = (S.fIdx.get(it.f) || {}).k === 'date' && listKey === 'groups' ? 'month' : ''; }
-    else if (e.type === 'change' && k === 'by') it.by = t.value;
-    else if (e.type === 'click' && k === 'd') it.d = !it.d;
-    else if (e.type === 'click' && k === 'x') arr.splice(+row.dataset.i, 1);
-    else return;
-    S.open = {}; changed(true);
-  };
-}
-['change', 'click'].forEach((ev) => $('grpList').addEventListener(ev, lvHandler('groups')));
-$('grpAdd').onclick = () => { const used = new Set(L().groups.map((g) => g.f)); const f = S.fields.find((x) => !used.has(x.id) && x.k === 'text') || S.fields.find((x) => !used.has(x.id)); if (!f) return; L().groups.push({ f: f.id, d: false, by: f.k === 'date' ? 'month' : '' }); S.open = {}; changed(true); };
-$('gChips').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; L()[b.dataset.k] = !L()[b.dataset.k]; changed(true); });
-$('gOpen').onchange = () => { L().open = +$('gOpen').value; S.open = {}; changed(); };
-$('gTotal').onchange = () => { L().total = $('gTotal').checked; changed(); };
-$('gTotalLbl').addEventListener('input', debounce(() => { L().totalLabel = $('gTotalLbl').value; changed(); }, 300));
 function defKind(f) { return f.k === 'date' ? 'date' : f.k === 'num' ? 'num' : 'list'; }
 function renderFilters() {
   $('fltList').innerHTML = S.cfg.filters.map((F, i) => { const f = S.fIdx.get(F.f) || { k: 'text' };
-    const kinds = f.k === 'date' ? [['date', 'Khoảng ngày']] : f.k === 'num' ? [['num', 'Khoảng số'], ['list', 'Chọn giá trị']] : [['list', 'Chọn giá trị'], ['text', 'Chứa chữ']];
+    const kinds = f.k === 'date' ? [['date', 'Khoảng ngày (từ – đến)'], ['day', 'Một ngày'], ['asof', 'Đến ngày (lũy kế)']] : f.k === 'num' ? [['num', 'Khoảng số'], ['list', 'Chọn giá trị']] : [['list', 'Chọn giá trị'], ['text', 'Chứa chữ']];
     return `<div class="lvrow" data-i="${i}"><span class="n">${i + 1}.</span><select data-k="f" aria-label="Cột lọc">${fieldOpts(F.f)}</select><button class="x" data-k="x" aria-label="Bỏ bộ lọc ${i + 1}">${svg('x')}</button>
       <select data-k="kind" aria-label="Kiểu lọc">${kinds.map(([v, t]) => `<option value="${v}"${F.kind === v ? ' selected' : ''}>${t}</option>`).join('')}</select>
-      ${F.kind === 'date' ? `<select data-k="def" title="Giá trị sẵn khi mở báo cáo" aria-label="Giá trị mặc định">${Object.entries(PRESETS).map(([v, t]) => `<option value="${v}"${F.def === v ? ' selected' : ''}>Sẵn: ${t}</option>`).join('')}</select>` : ''}
+      ${DATE_KINDS.has(F.kind) ? `<select data-k="def" title="Giá trị sẵn khi mở báo cáo" aria-label="Giá trị mặc định">${Object.entries(F.kind === 'date' ? PRESETS : DAY_PRESETS).map(([v, t]) => `<option value="${v}"${F.def === v ? ' selected' : ''}>Sẵn: ${t}</option>`).join('')}</select>` : ''}
       <input type="text" data-k="label" placeholder="Nhãn hiển thị (để trống = tên cột)" value="${esc(F.label)}" style="flex:1 1 100%" aria-label="Nhãn bộ lọc"></div>`; }).join('') || '<p class="hint">Chưa có bộ lọc. Gợi ý: Ngày (Từ ngày / Đến ngày), Khách hàng, Nhân viên…</p>';
 }
 $('fltList').addEventListener('change', (e) => {
   const row = e.target.closest('.lvrow'); if (!row) return; const F = S.cfg.filters[+row.dataset.i], k = e.target.dataset.k;
-  if (k === 'f') { F.f = e.target.value; F.kind = defKind(S.fIdx.get(F.f)); F.def = ''; } else if (k === 'kind') F.kind = e.target.value; else if (k === 'def') F.def = e.target.value; else if (k === 'label') F.label = norm(e.target.value);
+  if (k === 'f') { F.f = e.target.value; F.kind = defKind(S.fIdx.get(F.f)); F.def = ''; } else if (k === 'kind') { F.kind = e.target.value; F.def = F.kind === 'date' ? 'month' : DATE_KINDS.has(F.kind) ? 'today' : ''; } else if (k === 'def') F.def = e.target.value; else if (k === 'label') F.label = norm(e.target.value);
   initFv(); changed(true);
 });
 $('fltList').addEventListener('click', (e) => { if (!e.target.closest('[data-k=x]')) return; const row = e.target.closest('.lvrow'); S.cfg.filters.splice(+row.dataset.i, 1); initFv(); changed(true); });
 $('fltAdd').onclick = () => { const used = new Set(S.cfg.filters.map((x) => x.f)); const f = S.fields.find((x) => x.k === 'date' && !used.has(x.id)) || S.fields.find((x) => !used.has(x.id)); if (!f) return; S.cfg.filters.push({ id: uid(), f: f.id, kind: defKind(f), label: '', def: f.k === 'date' ? 'month' : '' }); initFv(); changed(true); };
-function syncDesignUI() { renderColList(); renderNotes(); renderGroups(); renderFilters(); }
+function syncDesignUI() { renderColList(); renderFilters(); }
 
 /* ---------------- thay đổi + lưu ---------------- */
 let dirty = false;
@@ -1113,6 +1291,7 @@ function renderViewFilters() {
   if (!fs.length) $('fvBody').innerHTML = '<p class="hint">Báo cáo này không có bộ lọc. Bấm <b>Báo cáo</b> để xem toàn bộ dữ liệu.</p>';
   else $('fvBody').innerHTML = fs.map((F, i) => {
     const lb = esc(F.label || fName(F.f)), v = S.fv[F.id] || {};
+    if (F.kind === 'day' || F.kind === 'asof') { const k = F.kind === 'day' ? 'd' : 'to', hit = Object.keys(DAY_PRESETS).find((p) => p && presetDay(p) === (v[k] || '')); return `<div class="fitm" data-id="${F.id}"><div class="t"><u>${i + 1}.</u>${lb}${F.kind === 'asof' ? ' <span style="font-weight:400;color:#8f959e">(đến ngày)</span>' : ''}</div><select data-k="dpre" aria-label="Chọn nhanh">${Object.entries(DAY_PRESETS).map(([p, t]) => `<option value="${p}"${hit === p || (!hit && !p && !v[k]) ? ' selected' : ''}>${p ? t : 'Chọn ngày…'}</option>`).join('')}</select><input type="date" data-k="${k}" value="${esc(v[k] || '')}" aria-label="${F.kind === 'day' ? 'Ngày' : 'Đến ngày'}"></div>`; }
     if (F.kind === 'date') return `<div class="fitm" data-id="${F.id}"><div class="t"><u>${i + 1}.</u>${lb}</div><select data-k="pre" aria-label="Khoảng nhanh">${Object.entries(PRESETS).map(([k, t]) => `<option value="${k}">${t}</option>`).join('')}<option value="custom">Tùy chọn…</option></select><div class="row"><input type="date" data-k="from" value="${esc(v.from || '')}" aria-label="Từ ngày" title="Từ ngày"><input type="date" data-k="to" value="${esc(v.to || '')}" aria-label="Đến ngày" title="Đến ngày"></div></div>`;
     if (F.kind === 'num') return `<div class="fitm" data-id="${F.id}"><div class="t"><u>${i + 1}.</u>${lb}</div><div class="row"><input type="number" data-k="from" placeholder="Từ" value="${esc(v.from ?? '')}" aria-label="Từ"><input type="number" data-k="to" placeholder="Đến" value="${esc(v.to ?? '')}" aria-label="Đến"></div></div>`;
     if (F.kind === 'text') return `<div class="fitm" data-id="${F.id}"><div class="t"><u>${i + 1}.</u>${lb}</div><input type="search" data-k="q" placeholder="Có chứa…" value="${esc(v.q || '')}"></div>`;
@@ -1126,13 +1305,14 @@ function markPend() { S.pend = true; $('fvPend').hidden = !S.ran; }
 $('fvBody').addEventListener('change', (e) => {
   const box = e.target.closest('.fitm'); if (!box) return; const id = box.dataset.id, k = e.target.dataset.k, v = (S.fv[id] = S.fv[id] || {});
   if (k === 'pre') { if (e.target.value === 'custom') return; Object.assign(v, presetRange(e.target.value)); renderViewFilters(); }
-  else if (k === 'from' || k === 'to') { v[k] = e.target.value; renderViewFilters(); }
+  else if (k === 'dpre') { const F = S.cfg.filters.find((x) => x.id === id); if (!e.target.value) return; v[F.kind === 'day' ? 'd' : 'to'] = presetDay(e.target.value); renderViewFilters(); }
+  else if (k === 'from' || k === 'to' || k === 'd') { v[k] = e.target.value; renderViewFilters(); }
   markPend();
 });
 $('fvBody').addEventListener('input', (e) => { const box = e.target.closest('.fitm'); if (!box || e.target.dataset.k !== 'q') return; (S.fv[box.dataset.id] = S.fv[box.dataset.id] || {}).q = e.target.value; markPend(); });
 $('fvBody').addEventListener('click', (e) => { const b = e.target.closest('.msb'); if (b) openListPop(b, b.closest('.fitm').dataset.id); });
 $('fvBody').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') runReport(false); });
-$('fvReset').onclick = () => { S.fv = {}; for (const F of S.cfg.filters) if (F.kind === 'date') S.fv[F.id] = { from: '', to: '' }; renderViewFilters(); markPend(); };
+$('fvReset').onclick = () => { S.fv = {}; for (const F of S.cfg.filters) if (DATE_KINDS.has(F.kind)) S.fv[F.id] = { from: '', to: '', d: '' }; renderViewFilters(); markPend(); };
 $('fvRun').onclick = () => runReport(false);
 let POP = null;
 async function openListPop(btn, id) {
@@ -1148,9 +1328,21 @@ async function openListPop(btn, id) {
 }
 function closePop() { if ($('pop').hidden) return; $('pop').hidden = true; POP = null; }
 // Bấm Báo cáo: đọc dữ liệu (dùng lại bản vừa đọc trong 60 giây), áp điều kiện lọc rồi vẽ
+// Giữ lại báo cáo đang xem khi Lark tải lại khung extension: lưu điều kiện đã chạy, mở lại thì tự chạy lại
+function runKey() { return 'rs-run:' + (isView() ? 'blk:' : 'side:') + (S.cfg.src.tableId || '') + ':' + (S.cfg.__ts || ''); }
+function saveRunState() { try { const v = JSON.stringify({ fv: S.fvRun, cur: S.cfg.cur, at: Date.now(), tab: S.tab, ran: S.ran }); sessionStorage.setItem(runKey(), v); localStorage.setItem(runKey(), v); } catch (e) {} }
+function loadRunState() { try { const o = JSON.parse(sessionStorage.getItem(runKey()) || localStorage.getItem(runKey()) || 'null'); if (o && Date.now() - o.at < 12 * 3600e3) return o; } catch (e) {} return null; }
+async function restoreRun() {
+  if (isEdit()) return false; const o = loadRunState(); if (!o) return false;
+  if (o.cur >= 0 && o.cur < S.cfg.layouts.length) S.cfg.cur = o.cur;
+  if (o.tab !== 'view' && !isView()) return false;
+  if (S.tab !== 'view') setTab('view');
+  if (!o.ran) return false;
+  S.fv = Object.assign({}, S.fv, o.fv || {}); renderViewFilters(); dlog('restore', 'chạy lại báo cáo sau khi tải lại'); await runReport(false); return true;
+}
 async function runReport(force) {
   closePop(); $('fvRun').disabled = true;
-  try { await ensureData(force); S.fvRun = clone(S.fv); S.ran = true; S.pend = false; S.cap = VIEW_CAP; S.open = {}; render(); renderViewFilters(); if (isView()) startLive(S.cfg); }
+  try { await ensureData(force); S.fvRun = clone(S.fv); S.ran = true; S.pend = false; S.cap = VIEW_CAP; S.open = {}; render(); renderViewFilters(); saveRunState(); if (isView()) startLive(S.cfg); }
   catch (e) { showErr(e); }
   finally { $('fvRun').disabled = false; }
 }
@@ -1180,7 +1372,7 @@ $('vRefresh').onclick = () => runReport(true);
 $('vPrint').onclick = () => { if (!S.ran) return toast('Bấm Báo cáo trước khi in.'); doPrint(); };
 $('vXlsx').onclick = () => { if (!S.ran) return toast('Bấm Báo cáo trước khi tải Excel.'); exportXlsx().catch((e) => { dlog('xlsx.error', String(e && e.message || e)); toast('Không xuất được Excel: ' + (e && e.message || e), 6000); }); };
 function setTab(t) {
-  S.tab = t; S.vlay = null; document.querySelectorAll('#modeTabs button').forEach((b) => b.classList.toggle('on', b.dataset.m === t));
+  S.tab = t; S.vlay = null; if (S.cfg && !S.dash) { const o = loadRunState() || {}; try { const v = JSON.stringify({ ...o, fv: o.fv || {}, cur: S.cfg.cur, at: Date.now(), tab: t, ran: t === 'view' ? !!o.ran : false }); sessionStorage.setItem(runKey(), v); localStorage.setItem(runKey(), v); } catch (e) {} } document.querySelectorAll('#modeTabs button').forEach((b) => b.classList.toggle('on', b.dataset.m === t));
   $('pDesign').hidden = t !== 'design'; $('pView').hidden = t !== 'view'; $('ribbon').hidden = t !== 'design'; $('barView').hidden = t !== 'view';
   if (t === 'view') renderViewFilters(); else syncDesignUI();
   render();
@@ -1191,7 +1383,8 @@ $('btnSide').onclick = () => document.body.classList.toggle('sidehid');
 /* ---------------- in ---------------- */
 function doPrint() {
   const lay = L();
-  $('printRoot').innerHTML = reportHTML(lay, filteredRows(), 'print', S.fvRun);
+  const pw = lay.orient === 'P' ? 718 : 1046;
+  $('printRoot').innerHTML = reportHTML(lay, filteredRows(), 'print', S.fvRun, pw - 40);
   const tw = parseFloat(($('printRoot').querySelector('table') || { style: {} }).style.width || '0');
   const avail = lay.orient === 'P' ? 718 : 1046, z = tw > avail ? avail / (tw + 40) : 1;
   $('pageCss').textContent = `@page{size:A4 ${lay.orient === 'P' ? 'portrait' : 'landscape'};margin:10mm}@media print{#printRoot .rpt{zoom:${z.toFixed(3)}}}`;
@@ -1218,7 +1411,7 @@ async function exportXlsx() {
   const push = (arr, st, meta) => { aoa.push(arr); styles.push(st); rowsMeta.push(meta || {}); return aoa.length - 1; };
   const line = (txt, s) => { const r = push([txt].concat(Array(nC - 1).fill('')), Array(nC).fill({ font: xFont(font, s), alignment: { horizontal: AL[s.al || 'c'] } })); merges.push({ s: { r, c: 0 }, e: { r, c: nC - 1 } }); };
   line(lay.title, sty.title);
-  for (const ln of headLines(lay, rows, S.fvRun, false)) line(ln.text, sty[ln.tg]);
+  for (const ln of lay.top || []) { const t = lineText(ln.text, rows, S.fvRun, lay); if (t) line(t, Object.assign({ al: 'c' }, ln.s)); }
   if (lay.showF) for (const t of filterLines(S.fvRun)) line(t, { b: true, al: 'c' });
   push(Array(nC).fill(''), Array(nC).fill({}));
   const hs = { font: xFont(font, sty.head), ...fill(sty.head.bg), border, alignment: { horizontal: AL[sty.head.al || 'c'], vertical: 'center', wrapText: true } };
@@ -1249,6 +1442,7 @@ async function exportXlsx() {
   const sorted = sortRows(rows, lay);
   if (groups.length) walk(buildTree(sorted, groups, 0, '', lay), 0, ''); else block(sorted, 0);
   if (lay.total) aggRow((lay.totalLabel || 'Tổng cộng:') + (aggK < 0 ? ' ' + srcRows(rows).length + ' dòng' : ''), rows, sty.total, -1, true);
+  for (const ln of lay.bottom || []) { const t = lineText(ln.text, rows, S.fvRun, lay); if (t) line(t, Object.assign({ al: 'c' }, ln.s)); }
   const F = lay.foot;
   if (F.show) {
     push(Array(nC).fill(''), Array(nC).fill({})); const third = Math.max(1, Math.floor(nC / 3)), pos = [0, third, Math.max(third, nC - third)];
@@ -1306,6 +1500,7 @@ async function openTable(tid, keepCfg) {
   if (!keepCfg) { let saved = null; if (!S.dash) saved = await stoGet('rs-cfg:' + tid); S.cfg = fixCfg(saved || defCfg()); S.cfg.src.tableId = tid; S.cfg.src.tableName = S.tableMeta.name; S.cfg.src.baseToken = S.srcToken; }
   const packId = S.cfg.src.packId || ((S.metas.find((m) => m.name === PACK_NAME) || {}).id) || '';
   setFields(S.metas.filter((m) => !BAD_TYPES().has(m.type) && m.id !== packId && m.name !== PACK_NAME).map((m) => ({ id: m.id, name: m.name, type: m.type, k: kindOf(m, sample) })));
+  S.sampleRows = computeCalcs(sample.map((r) => { const o = {}; for (const f of S.baseFields) o[f.id] = cellVal(f, r.fields ? r.fields[f.id] : undefined); return o; }));
   const lay = L();
   if (!keepCfg && !lay.cols.length) {
     lay.title = (S.tableMeta.name || 'Báo cáo').toLocaleUpperCase('vi');
@@ -1317,6 +1512,7 @@ async function openTable(tid, keepCfg) {
   $('selTable').value = tid; fillPackSelect();
   initFv(); S.open = {}; S.selCol = -1; S.tgt = 'title'; S.rows = []; S.ran = false; S.rowsAt = 0;
   boxMsg(''); setStatus('ok', 'Đã kết nối · ' + S.fields.length + ' cột');
+  if (!S.dash) setTimeout(() => restoreRun().catch((e) => dlog('restore.error', String(e && e.message || e))), 0);
   syncDesignUI(); if (S.tab === 'view') renderViewFilters(); render();
 }
 async function loadRecords() {
@@ -1334,7 +1530,7 @@ async function loadRecords() {
       const nx = res && res.pageToken; if (!res || !res.hasMore || nx === undefined || nx === null || nx === '' || nx === token) break; token = nx;
     }
     if (seq !== S.loadSeq) return;
-    S.rows = order ? order.map((id) => recs.get(id)).filter(Boolean) : [...recs.values()];
+    S.rows = computeCalcs(order ? order.map((id) => recs.get(id)).filter(Boolean) : [...recs.values()]);
     S.rowsAt = Date.now(); dlog('records', { n: S.rows.length, ms: Math.round(performance.now() - t0) });
     setStatus('ok', 'Đã đọc ' + S.rows.length.toLocaleString('vi-VN') + ' dòng');
   } finally { if (seq === S.loadSeq) S.loading = false; }
@@ -1358,7 +1554,7 @@ async function unpackCfg(cc) {
   const bin = atob(cc.d), buf = Uint8Array.from(bin, (c) => c.charCodeAt(0));
   return JSON.parse(await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
 }
-async function getDashCfg() { try { const c = await withTimeout(dashboard.getConfig(), 6000); const inner = await unpackCfg(c && c.customConfig); if (!inner) return null; inner.__dc = [].concat(c.dataConditions || [])[0] || null; return inner; } catch (e) { dlog('dash.getConfig.error', String(e && e.message || e)); return null; } }
+async function getDashCfg() { try { const c = await withTimeout(dashboard.getConfig(), 6000); const inner = await unpackCfg(c && c.customConfig); if (!inner) return null; inner.__dc = [].concat(c.dataConditions || [])[0] || null; inner.__ts = c.customConfig.ts; return inner; } catch (e) { dlog('dash.getConfig.error', String(e && e.message || e)); return null; } }
 async function baseTokenNow() {
   if (S.srcToken) return S.srcToken; if (S.selfToken !== undefined) return S.selfToken; let t = '';
   try { const sel = await withTimeout(bitable.base.getSelection(), 3000); t = (sel && (sel.baseId || sel.baseToken)) || ''; } catch (e) {}
@@ -1387,7 +1583,9 @@ function packNeeded() {
   const ids = new Set();
   for (const l of S.cfg.layouts) { l.cols.forEach((c) => ids.add(c.f)); l.groups.forEach((g) => ids.add(g.f)); l.sort.forEach((s) => ids.add(s.f)); (l.notes || []).forEach((n) => n.t === 'field' && ids.add(n.f)); }
   S.cfg.filters.forEach((F) => ids.add(F.f));
-  return [...ids].map((id) => S.fIdx.get(id)).filter(Boolean);
+  calcRefs().forEach((id) => ids.add(id));
+  for (const l of S.cfg.layouts) lineFieldIds([...(l.top || []), ...(l.bottom || [])]).forEach((id) => ids.add(id));
+  return [...ids].map((id) => S.fIdx.get(id)).filter((f) => f && !f.calc);
 }
 const packExpr = (f) => (f.k === 'date' ? `TEXT([${f.name}],"YYYY/MM/DD")` : `[${f.name}]`);
 const packFormula = (cols) => cols.map((f) => `"${PACK_TAG}${f.id}:" & ${packExpr(f)}`).join(` & "${PACK_SEP}" & `);
@@ -1533,7 +1731,7 @@ async function refreshLive(c, quiet) {
     if (ungrouped(data) && rows0(data) > 0) throw new Error('Lark chỉ trả tổng số thay vì từng dòng: khối chưa được nhóm theo cột gói. Người sửa khối hãy mở Sửa khối → Kiểm tra → Lưu khối.');
     const rows = unpackRows(data, c.src.packCols);
     if (rows.missing.length) throw new Error('Cột gói thiếu dữ liệu của: ' + rows.missing.map((f) => f.name).join(', ') + '. Mở Sửa khối → Tạo / cập nhật cột gói → Lưu khối.');
-    S.rows = rows; S.rowsAt = Date.now(); S.liveAt = Date.now(); setStatus('ok', 'Đã cập nhật ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
+    S.rows = computeCalcs(rows); S.rowsAt = Date.now(); S.liveAt = Date.now(); setStatus('ok', 'Đã cập nhật ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
   } finally { S.liveBusy = false; S.loading = false; if (quiet && S.ran) render(); }
 }
 function startLive(c) {
@@ -1547,9 +1745,10 @@ async function bootView() {
   document.body.classList.add('dashview'); $('modeTabs').hidden = true;
   const c = await getDashCfg();
   if (!c) { setStatus('wait', 'Khối chưa cấu hình'); $('ribbon').hidden = true; $('pDesign').hidden = true; $('sheet').innerHTML = '<div class="empty">Khối báo cáo chưa được thiết lập. Người sửa khối hãy bấm <b>Sửa khối</b> → thiết kế → <b>Lưu khối</b>.</div>'; return; }
-  const dc = c.__dc; S.cfg = fixCfg(c); S.cfg.__dc = dc; S.cfg.src = c.src;
+  const dc = c.__dc, ts = c.__ts; S.cfg = fixCfg(c); S.cfg.__dc = dc; S.cfg.__ts = ts; S.cfg.src = c.src;
   setFields((c.src.packCols || []).map((f) => ({ id: f.id, name: f.name, type: f.type, k: f.k || 'text' })));
   initFv(); S.rows = []; S.ran = false; setTab('view'); setStatus('ok', 'Sẵn sàng — chọn điều kiện rồi bấm Báo cáo');
+  await restoreRun().catch((e) => dlog('restore.error', String(e && e.message || e)));
 }
 
 /* ---------------- menu ⋯ ---------------- */
@@ -1573,7 +1772,7 @@ async function boot() {
     setStatus('wait', 'Đang đọc Base…');
     const dm = await detectDashboard(); S.dash = dm; dlog('dashMode', dm);
     if (dm) { try { dashboard.setRendered(); } catch (e) {} }
-    if (dm === 'View' || dm === 'FullScreen') { await bootView(); try { dashboard.onConfigChange(async () => { await bootView(); }); } catch (e) {} return; }
+    if (dm === 'View' || dm === 'FullScreen') { await bootView(); try { dashboard.onConfigChange(async () => { let ts = null; try { const c2 = await withTimeout(dashboard.getConfig(), 6000); ts = c2 && c2.customConfig && c2.customConfig.ts; } catch (e) {} if (ts && S.cfg && ts === S.cfg.__ts) { dlog('configChange', 'bỏ qua — cấu hình không đổi'); return; } await bootView(); }); } catch (e) {} return; }
     if (dm === 'Create' || dm === 'Config') { $('btnDashSave').hidden = false; $('packBox').hidden = false; $('modeTabs').querySelector('[data-m=view]').textContent = 'Xem thử'; }
     const tables = await useBase('');
     const dc = dm === 'Config' ? await getDashCfg() : null;
