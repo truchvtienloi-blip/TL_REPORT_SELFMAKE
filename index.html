@@ -192,6 +192,64 @@ body.dashview.sidehid .layout{grid-template-columns:minmax(0,1fr)}
 @media(max-width:860px){.layout{grid-template-columns:1fr;overflow:auto}.side{max-height:45vh}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
+<style>
+/* ===================== Giao diện cổ điển (ít bo góc) ===================== */
+:root{--ink:#1e1e1e;--muted:#5f6368;--line:#c9c9c9;--soft:#f0f0f0;--blue:#1c5aa6;--blue-soft:#dce8f6}
+*:not(.dot){border-radius:0!important}
+button,input,select,textarea,.msb,.cbtn{border-radius:2px!important}
+body{font:12.5px/1.4 "Segoe UI",Tahoma,Arial,sans-serif;background:#e4e4e4;color:var(--ink)}
+button{background:linear-gradient(#fdfdfd,#ececec);border:1px solid #adadad;padding:3px 9px;font-weight:400}
+button:hover{background:#e5f1fb;border-color:#3c7fc7}
+button.primary{background:var(--blue);border-color:#144a8c;color:#fff;box-shadow:none}button.primary:hover{background:#2366b8}
+button[aria-pressed=true],button.on{background:#cce4f7;border-color:#569de5;color:#0f3f7a}
+input[type=text],input[type=search],input[type=number],input[type=date],select,textarea{border:1px solid #b5b5b5;padding:3px 6px;background:#fff}
+.top{background:#f0f0f0;border-bottom:1px solid #c9c9c9;padding:4px 8px;box-shadow:none}
+.tabs{background:transparent;padding:0;gap:0}
+.tabs button{background:#e6e6e6;border:1px solid #c3c3c3;border-left-width:0;padding:3px 14px;color:#333;font-weight:400}
+.tabs button:first-child{border-left-width:1px}.tabs button.on{background:#fff;color:#000;font-weight:600;box-shadow:inset 0 -2px 0 var(--blue)}
+.ribbon{background:#f7f7f7;border-bottom:1px solid #c9c9c9;padding:3px 4px;min-height:0}
+.rg{border-right:1px solid #d4d4d4;padding:1px 6px}
+.rr button{background:transparent;border:1px solid transparent}
+.rr button:hover{background:#e5f1fb;border-color:#cce4f7}
+.rr button[aria-pressed=true]{background:#cce4f7;border-color:#569de5}
+.layout{background:#e4e4e4}
+.side{background:#f7f7f7;border-right:1px solid #c3c3c3}
+.shead{display:flex;align-items:center;gap:6px;background:#e1e1e1;border-bottom:1px solid #c3c3c3;padding:3px 4px 3px 10px;font-weight:600;min-height:30px}
+.shead #sTitle{flex:1}.shead button{padding:1px 7px}.shead .sq{width:24px;height:22px;padding:0;font-size:14px;line-height:1}
+.sec{padding:0 0 10px;gap:7px;border-bottom:1px solid #d4d4d4}
+.sec>*:not(h3){margin-left:10px;margin-right:10px}
+.sec h3{background:#ececec;border-bottom:1px solid #dcdcdc;padding:5px 10px;font-size:12px;color:#222;text-transform:none;letter-spacing:0}
+.sec.collapsed{padding-bottom:0}.sec.collapsed h3{border-bottom:0}
+.msg{background:#f3f3f3;border:1px solid #dadada}
+.flist{border:1px solid #c9c9c9;background:#fff;padding:0}
+.fitem{padding:3px 6px}.fitem:hover{background:#e5f1fb}
+.lvrow{background:#fff;border:1px solid #d6d6d6;padding:4px}
+.addbtn{border-style:dashed;background:#fff}
+.stage{background:#c9c9c9;border:0}
+.rpt{box-shadow:0 0 0 1px #a9a9a9}
+.gbar{background:#ececec;border-bottom:1px solid #c3c3c3}
+.gbar .gchip{border:1px solid #9fb7d6;background:#fff}
+.gbar .gph{color:#8a8a8a;font-style:italic}.gbar .gadd{margin-left:6px;padding:1px 8px;font-size:12px}.gbar .gopt{margin-left:auto;padding:1px 8px;font-size:12px}
+.vbar{background:#f7f7f7;border-bottom:1px solid #c9c9c9;padding:4px 8px}
+.lvbox{display:inline-flex;align-items:center;gap:6px}.lvbox .lvlbl{color:var(--muted)}
+.lvbox .seg{border:1px solid #adadad}.lvbox .seg button{border:0;border-right:1px solid #c9c9c9;background:linear-gradient(#fdfdfd,#ececec);padding:2px 9px;min-width:26px}
+.lvbox .seg button:last-child{border-right:0}
+.foot{background:#f0f0f0;border-top:1px solid #c9c9c9}
+.ltabs button{background:#e6e6e6;border:1px solid #c3c3c3;border-top:0;margin-right:-1px;padding:3px 12px}
+.ltabs button.on{background:#fff;box-shadow:inset 0 -2px 0 var(--blue)}
+.menu,.pop,.panel,.card{box-shadow:2px 3px 8px #0003;border-color:#a9a9a9}
+.menu .mi:hover,.menu .mi.open{background:#cce4f7}
+.ffoot{background:#f0f0f0;border-top:1px solid #c9c9c9}
+.toast{background:#333}
+/* thanh bên thu gọn thành dải dọc */
+body.sidehid .layout,body.dashview.sidehid .layout{grid-template-columns:24px minmax(0,1fr)}
+body.sidehid .side{display:flex!important;overflow:hidden}
+body.sidehid .side>:not(.shead){display:none!important}
+body.sidehid .shead{flex-direction:column-reverse;justify-content:flex-end;height:100%;padding:4px 0;border-bottom:0}
+body.sidehid #sTitle{writing-mode:vertical-rl;transform:rotate(180deg);flex:0 0 auto;font-weight:600;color:#444}
+body.sidehid #fvReset{display:none}
+body.dashview .top{display:none}
+</style>
 <style id="pageCss"></style>
 </head>
 <body>
@@ -220,7 +278,6 @@ body.dashview.sidehid .layout{grid-template-columns:minmax(0,1fr)}
 <div class="app">
 <header class="top">
   <div class="tl">
-    <button id="btnSide" class="ib sq" title="Ẩn / hiện thanh bên" aria-label="Ẩn hoặc hiện thanh bên"><svg class="i"><use href="#i-side"/></svg></button>
     <div class="tabs" id="modeTabs" role="tablist"><button data-m="design" class="on" role="tab">Thiết kế</button><button data-m="view" role="tab">Xem báo cáo</button></div>
   </div>
   <div class="status">
@@ -240,37 +297,36 @@ body.dashview.sidehid .layout{grid-template-columns:minmax(0,1fr)}
     <label class="cbtn" title="Màu chữ">A<i id="rCsw"></i><input type="color" id="rC" aria-label="Màu chữ"></label>
     <label class="cbtn" title="Màu nền" style="font-size:11px">Nền<i id="rBgsw"></i><input type="color" id="rBg" aria-label="Màu nền"></label>
     <button id="rClr" aria-label="Xóa định dạng" title="Xóa định dạng của vùng đang chọn"><svg class="i"><use href="#i-eraser"/></svg></button>
-  </div><div class="rc">Chữ · <b id="rTgtName"></b></div></div>
+  </div></div>
   <div class="rg"><div class="rr" id="rAl">
     <button data-al="l" aria-label="Căn trái" title="Căn trái" aria-pressed="false"><svg class="i"><use href="#i-al"/></svg></button>
     <button data-al="c" aria-label="Căn giữa" title="Căn giữa" aria-pressed="false"><svg class="i"><use href="#i-ac"/></svg></button>
     <button data-al="r" aria-label="Căn phải" title="Căn phải" aria-pressed="false"><svg class="i"><use href="#i-ar"/></svg></button>
-  </div><div class="rc">Căn lề</div></div>
+  </div></div>
   <div class="rg" id="rgNum"><div class="rr">
     <select id="rFmt" aria-label="Định dạng giá trị"><option value="">Tự động</option><option value="text">Chữ</option><option value="num">Số</option><option value="pct">Phần trăm</option><option value="date">Ngày</option></select>
     <button id="rDpM" aria-label="Bớt số lẻ" title="Bớt số lẻ">.0<svg class="i" style="width:11px"><use href="#i-left"/></svg></button>
     <button id="rDpP" aria-label="Thêm số lẻ" title="Thêm số lẻ">.00<svg class="i" style="width:11px"><use href="#i-right"/></svg></button>
-  </div><div class="rc">Số</div></div>
+  </div></div>
   <div class="rg" id="rgCol"><div class="rr">
-    <input type="text" id="rH" placeholder="Tiêu đề cột" aria-label="Tiêu đề cột" title="Tiêu đề cột">
-    <input type="text" id="rG" placeholder="Gộp tiêu đề" aria-label="Tiêu đề nhóm cột" title="Các cột liền nhau có cùng 'Gộp tiêu đề' sẽ chung 1 ô tiêu đề phía trên (vd. Phát sinh → Nợ / Có)">
     <input type="number" id="rW" min="30" max="800" aria-label="Độ rộng cột (px)" title="Độ rộng cột (px)">
     <select id="rA" aria-label="Cách tính tổng" title="Cách tính ở dòng nhóm và dòng tổng"><option value="">Không tính</option><option value="sum">Σ Tổng</option><option value="cnt">Đếm</option><option value="cntd">Đếm khác nhau</option><option value="avg">Trung bình</option><option value="min">Nhỏ nhất</option><option value="max">Lớn nhất</option></select>
-    <button id="rMg" aria-pressed="false" title="Gộp các ô có cùng giá trị nằm liền nhau thành 1 ô (dòng sẽ tự sắp xếp để gom giá trị giống nhau lại)"><svg class="i"><use href="#i-merge"/></svg>Gộp ô trùng</button>
+    <button id="rMg" aria-pressed="false" aria-label="Gộp ô trùng" title="Gộp ô trùng: các ô cùng giá trị liền nhau thành 1 ô"><svg class="i"><use href="#i-merge"/></svg></button>
     <button id="rWrap" aria-pressed="false" aria-label="Tự xuống dòng" title="Tự xuống dòng khi chữ dài"><svg class="i"><use href="#i-wrap"/></svg></button>
     <button id="rL" aria-label="Chuyển cột sang trái" title="Chuyển sang trái"><svg class="i"><use href="#i-left"/></svg></button>
     <button id="rR" aria-label="Chuyển cột sang phải" title="Chuyển sang phải"><svg class="i"><use href="#i-right"/></svg></button>
     <button id="rX" aria-label="Bỏ cột" title="Bỏ cột khỏi báo cáo" class="danger"><svg class="i"><use href="#i-x"/></svg></button>
-  </div><div class="rc">Cột <b id="rColName"></b></div></div>
+  </div></div>
   <div class="rg"><div class="rr">
     <select id="rOrient" aria-label="Khổ giấy"><option value="L">A4 ngang</option><option value="P">A4 dọc</option></select>
     <label class="cbtn" title="Màu đường kẻ" style="font-size:11px">Kẻ<i id="rGridsw"></i><input type="color" id="rGrid" aria-label="Màu đường kẻ"></label>
     <button id="rZebra" aria-pressed="false" title="Tô xen kẽ dòng chi tiết">Xen kẽ</button>
-    <button id="rGset" class="ib" title="Kiểu số, ngày, dòng tổng, ký tên…"><svg class="i"><use href="#i-gear"/></svg>Thiết lập chung</button>
-  </div><div class="rc">Trang</div></div>
+    <button id="rGset" class="ib" title="Kiểu số, ngày, ký tên, giãn cột…"><svg class="i"><use href="#i-gear"/></svg>Thiết lập</button>
+  </div></div>
 </div>
 <div class="layout">
 <aside class="side" id="side">
+  <div class="shead"><span id="sTitle">Thiết lập báo cáo</span><button id="fvReset" hidden>Xóa lọc</button><button id="btnSide" class="sq" title="Thu gọn thanh bên" aria-label="Thu gọn thanh bên">«</button></div>
   <div id="pDesign">
     <div class="sec" id="secSrc"><h3>1 · Nguồn dữ liệu</h3>
       <div id="boxMsg" class="msg">Đang kết nối Lark Base…</div>
@@ -278,7 +334,7 @@ body.dashview.sidehid .layout{grid-template-columns:minmax(0,1fr)}
       <label class="lbl">Bảng<select id="selTable" disabled></select></label>
       <label class="lbl">View (lọc sẵn của Lark)<select id="selView"></select></label>
       <div id="packBox" hidden style="display:flex;flex-direction:column;gap:6px">
-        <label class="lbl">Cột gói dữ liệu (để khối tự lấy dữ liệu mới)<select id="selPack"></select></label>
+        <label class="lbl">Cột gói dữ liệu<select id="selPack" title="Cột công thức gom các cột báo cáo dùng, để khối luôn lấy được dữ liệu mới"></select></label>
         <div class="row"><button id="btnPack">Tạo / cập nhật cột gói</button><button id="btnPackTest" class="fit">Kiểm tra</button></div>
         <p class="hint" id="packHint"></p>
       </div>
@@ -286,8 +342,7 @@ body.dashview.sidehid .layout{grid-template-columns:minmax(0,1fr)}
     <div class="sec" id="secCols"><h3>2 · Cột hiển thị <span class="cnt" id="colCnt"></span></h3>
       <div class="row"><input type="search" id="fSearch" placeholder="Tìm cột…" aria-label="Tìm cột"><button id="fAll" class="fit" style="font-size:12px">Chọn hết</button><button id="fNone" class="fit" style="font-size:12px">Bỏ hết</button></div>
       <div class="flist" id="fList"></div>
-      <button class="addbtn ib" id="calcAdd"><svg class="i"><use href="#i-plus"/></svg>Cột công thức (chỉ trên báo cáo)</button>
-      <p class="hint">Kéo tiêu đề cột trên mẫu để đổi thứ tự · bấm đúp tiêu đề để đổi tên · <b>chuột phải</b> để nhóm, tính tổng, STT, gộp ô, neo cột…</p>
+      <button class="addbtn ib" id="calcAdd" title="Thêm cột tính bằng công thức — chỉ hiện trên báo cáo, không thêm vào Base"><svg class="i"><use href="#i-plus"/></svg>Tùy chỉnh thêm cột</button>
     </div>
     <div class="sec" id="secFlt"><h3>3 · Cột lọc dữ liệu</h3>
       <div class="lv" id="fltList"></div>
@@ -295,19 +350,13 @@ body.dashview.sidehid .layout{grid-template-columns:minmax(0,1fr)}
     </div>
   </div>
   <div id="pView" class="fpanel" hidden>
-    <div class="fhead"><span>Điều kiện lọc</span><button id="fvReset" style="font-size:12px;padding:3px 8px">Xóa lọc</button></div>
     <div class="fbody" id="fvBody"></div>
-    <div class="ffoot"><span class="pend" id="fvPend" hidden>Điều kiện đã thay đổi — bấm Báo cáo để xem.</span><button id="fvRun" class="primary ib"><svg class="i"><use href="#i-play"/></svg>Báo cáo</button></div>
+    <div class="ffoot"><span class="pend" id="fvPend" hidden>Điều kiện đã đổi — bấm Báo cáo.</span><button id="fvRun" class="primary ib"><svg class="i"><use href="#i-play"/></svg>Báo cáo</button></div>
   </div>
 </aside>
 <main class="main">
   <div class="vbar" id="barView" hidden>
-    <button id="vRefresh" class="ib" title="Đọc lại dữ liệu mới nhất"><svg class="i"><use href="#i-refresh"/></svg>Làm mới</button>
-    <span class="sep"></span>
-    <button id="vOpen" class="ib" title="Mở tất cả nhóm"><svg class="i"><use href="#i-plus"/></svg>Mở hết</button>
-    <button id="vClose" class="ib" title="Thu gọn tất cả nhóm"><svg class="i"><use href="#i-minus"/></svg>Thu gọn</button>
-    <span id="vLevels" class="seg"></span>
-    <span class="sep"></span>
+    <span id="vLvBox" class="lvbox" hidden><span class="lvlbl">Cấp</span><span id="vLevels" class="seg" role="group" aria-label="Hiện tới cấp nhóm"></span><span class="sep"></span></span>
     <input type="search" id="vSearch" placeholder="Tìm nhanh trong báo cáo…" style="width:200px" aria-label="Tìm nhanh">
     <span style="flex:1"></span>
     <select id="vZoom" aria-label="Thu phóng"><option value="0.75">75%</option><option value="0.9">90%</option><option value="1" selected>100%</option><option value="1.1">110%</option><option value="1.25">125%</option></select>
@@ -774,6 +823,7 @@ function demoRows(lay) {
 }
 
 /* ---------------- vẽ báo cáo ---------------- */
+const inSel = (i) => S.selCol === i || (S.selRange && i >= S.selRange[0] && i <= S.selRange[1]);
 function reportHTML(lay, rows, mode, fv, availW) {
   const design = mode === 'design', print = mode === 'print' || mode === 'xls', allOpen = mode === 'xls' || design;
   const ci = lay.cols.map((c, i) => i).filter((i) => S.fIdx.has(lay.cols[i].f));
@@ -783,7 +833,6 @@ function reportHTML(lay, rows, mode, fv, availW) {
   if (lay.mode === 'sum') rows = summarize(rows, lay);
   const nRows = srcRows(rows).length;
   let h = `<div class="rpt ${design ? 'design' : 'view'}" style="font-family:'${esc(lay.font)}',serif;font-size:${fs}px;--grid:${lay.grid};--pad:${PADS[lay.pad] || 3}px">`;
-  if (design) h += `<div class="dnote">Dòng dữ liệu là minh họa — báo cáo thật chỉ đọc dữ liệu khi người xem bấm <b>Báo cáo</b>.</div>`;
   h += `<div class="rh"><div class="rt${sel('title')}" data-tg="title" style="${css(sty.title)}"${ed('title')}>${esc(lay.title)}</div>`;
   h += linesHTML(lay, 'top', rows, fv, design);
   if (lay.showF && !design) for (const t of filterLines(fv)) h += `<div class="rfl">${esc(t)}</div>`;
@@ -800,7 +849,7 @@ function reportHTML(lay, rows, mode, fv, availW) {
   const hasG = cols.some((c) => c.g);
   let r1 = '', r2 = '';
   if (lay.showNo) r1 += `<th rowspan="${hasG ? 2 : 1}" data-tg="head" class="${fz(0).c}" style="${hs}${fz(0).s}">STT</th>`;
-  const th = (k, rs) => { const i = ci[k], c = lay.cols[i], z = fz(off + k); return `<th data-ci="${i}"${rs > 1 ? ` rowspan="${rs}"` : ''} class="${design && S.selCol === i && S.tgt === 'col' ? 'sel' : ''}${z.c}"${mode === 'view' || design ? ' draggable="true"' : ''} style="${hs}${z.s}"><span class="hl">${esc(c.h || fName(c.f))}</span>${design ? `<i class="grip" data-ci="${i}"></i>` : ''}</th>`; };
+  const th = (k, rs) => { const i = ci[k], c = lay.cols[i], z = fz(off + k); return `<th data-ci="${i}"${rs > 1 ? ` rowspan="${rs}"` : ''} class="${design && S.tgt === 'col' && inSel(i) ? 'sel' : ''}${z.c}"${mode === 'view' || design ? ' draggable="true"' : ''} style="${hs}${z.s}"><span class="hl">${esc(c.h || fName(c.f))}</span>${design ? `<i class="grip" data-ci="${i}"></i>` : ''}</th>`; };
   for (let k = 0; k < cols.length;) {
     const c = cols[k];
     if (hasG && c.g) { let j = k; while (j + 1 < cols.length && cols[j + 1].g === c.g) j++; const z = off + j < nFz ? fz(off + k) : fz(1e9); r1 += `<th colspan="${j - k + 1}" data-tg="head" class="${z.c}" style="${hs}${z.s}"${design ? ` contenteditable="true" spellcheck="false" data-ed="grp:${ci[k]}:${j - k + 1}"` : ''}>${esc(c.g)}</th>`; for (let x = k; x <= j; x++) r2 += th(x, 1); k = j + 1; }
@@ -834,7 +883,7 @@ function reportHTML(lay, rows, mode, fv, availW) {
       cols.forEach((c, k) => {
         const sp = spans && spans.get(k); if (sp && sp[ri] === 0) return;
         const i = ci[k], v = c.agg && r._src ? aggOf(c, [r]) : r[c.f], z = fz(off + k);
-        s += `<td data-ci="${i}"${sp && sp[ri] > 1 ? ` rowspan="${sp[ri]}"` : ''} class="${c.wrap ? 'w' : ''}${sp ? ' mg' : ''}${design && S.tgt === 'col' && S.selCol === i ? ' sel' : ''}${z.c}" style="${bodyS}${z.s}text-align:${AL[alOf(c, lay)]};${css(c.s, true)}">${esc(c.agg && r._src ? fmtAgg(c, [r], lay) : fmtVal(c, v, lay))}</td>`;
+        s += `<td data-ci="${i}"${sp && sp[ri] > 1 ? ` rowspan="${sp[ri]}"` : ''} class="${c.wrap ? 'w' : ''}${sp ? ' mg' : ''}${design && S.tgt === 'col' && inSel(i) ? ' sel' : ''}${z.c}" style="${bodyS}${z.s}text-align:${AL[alOf(c, lay)]};${css(c.s, true)}">${esc(c.agg && r._src ? fmtAgg(c, [r], lay) : fmtVal(c, v, lay))}</td>`;
       });
       s += '</tr>';
     });
@@ -893,7 +942,7 @@ const BY_NAME = { '': 'theo ngày', month: 'theo tháng', quarter: 'theo quý', 
 function gbarHTML(lay) {
   const gs = lay.groups.filter((g) => S.fIdx.has(g.f));
   const chips = gs.map((g, i) => { const f = S.fIdx.get(g.f); return `<span class="gchip" data-gl="${lay.groups.indexOf(g)}" title="Bấm để chỉnh cấp nhóm này"><b>${i + 1}</b>${esc(f.name)}${f.k === 'date' ? ' · ' + BY_NAME[g.by || ''] : ''}${g.d ? ' · Z→A' : ''}<button class="x" data-gx="${lay.groups.indexOf(g)}" aria-label="Bỏ nhóm ${esc(f.name)}">×</button></span>`; }).join('<span class="gsep">›</span>');
-  return `<div class="gbar" id="gbar"><span>Nhóm theo:</span>${chips || '<span>Kéo tiêu đề cột vào đây (hoặc chuột phải → Nhóm theo cột) để gom nhóm</span>'}${S.tab === 'view' ? '<span style="color:#a65400">· chỉnh ở đây chỉ áp dụng cho lần xem này</span>' : ''}<button class="gopt" id="gOptBtn">Tùy chọn nhóm &amp; tổng ▾</button></div>`;
+  return `<div class="gbar" id="gbar"><span>Nhóm theo:</span>${chips || '<span class="gph">kéo tiêu đề cột vào đây</span>'}<button class="gadd" id="gAddBtn" title="Nhóm theo cột (kể cả cột không hiện trên báo cáo)">+ Nhóm</button><button class="gopt" id="gOptBtn">Tùy chọn ▾</button></div>`;
 }
 function fixSticky() {
   const z = S.tab === 'view' ? S.zoom : 1, top0 = -parseFloat(getComputedStyle($('stage')).paddingTop || '0') + ($('gbar') ? $('gbar').offsetHeight : 0);
@@ -990,6 +1039,9 @@ sheet.addEventListener('click', (e) => {
   // thanh nhóm
   const gx = e.target.closest('[data-gx]'); if (gx) { apply((l) => { l.groups.splice(+gx.dataset.gx, 1); }); return; }
   const gc = e.target.closest('.gchip'); if (gc) { const r = gc.getBoundingClientRect(); levelMenu(r.left, r.bottom + 4, +gc.dataset.gl); return; }
+  if (e.target.closest('#gAddBtn')) { const r = e.target.closest('#gAddBtn').getBoundingClientRect(), lay = L(); const on = new Set(lay.groups.map((g) => g.f)), vis = new Set(lay.cols.map((c) => c.f));
+    const mk = (f) => ({ t: f.name, ck: on.has(f.id), fn: () => toggleGroupField(f.id) });
+    ctxMenu(r.left, r.bottom + 4, [{ h: 'Cột trên báo cáo' }, ...S.fields.filter((f) => vis.has(f.id)).map(mk), ...(S.fields.some((f) => !vis.has(f.id)) ? ['-', { h: 'Cột khác' }, ...S.fields.filter((f) => !vis.has(f.id)).map(mk)] : [])]); return; }
   if (e.target.closest('#gOptBtn')) { const r = e.target.closest('#gOptBtn').getBoundingClientRect(); ctxMenu(r.right - 260, r.bottom + 4, [...(S.tab === 'view' ? [{ h: 'Chỉ áp dụng cho lần xem này' }] : []), ...groupOptItems(L())]); return; }
   const gr = e.target.closest('tr.gr');
   if (gr && S.tab !== 'design') { if (e.target.closest('.tg') || e.ctrlKey || e.metaKey || e.detail >= 1) toggleGroup(gr, e.ctrlKey || e.metaKey); return; }
@@ -1000,7 +1052,7 @@ sheet.addEventListener('click', (e) => {
   const ladd = e.target.closest('[data-ladd]'); if (ladd) { addLine(ladd.dataset.ladd); return; }
   const line = e.target.closest('.rline'); if (line) { const id = line.dataset.line.split(':')[1]; if (S.tgt !== 'line' || S.tgtLine !== id) { S.tgt = 'line'; S.tgtLine = id; line.classList.add('tsel'); sheet.querySelectorAll('.tsel').forEach((x) => x !== line && x.classList.remove('tsel')); syncRibbon(); } return; }
   const cell = e.target.closest('th[data-ci],td[data-ci]');
-  if (cell && !e.target.classList.contains('grip')) { selectTgt('col', +cell.dataset.ci); return; }
+  if (cell && !e.target.classList.contains('grip')) { const ci = +cell.dataset.ci; if (e.shiftKey && S.tgt === 'col' && S.selCol >= 0) { S.selRange = [Math.min(S.selCol, ci), Math.max(S.selCol, ci)]; render(); return; } S.selRange = null; selectTgt('col', ci); return; } // Shift + bấm: chọn nhiều cột liền nhau
   const tg = e.target.closest('[data-tg]'); if (tg) selectTgt(tg.dataset.tg);
 });
 // Bấm đúp tiêu đề cột (thiết kế) → đổi tên ngay trên mẫu
@@ -1009,7 +1061,7 @@ sheet.addEventListener('dblclick', (e) => {
   const hl = th.querySelector('.hl'); th.draggable = false; hl.contentEditable = 'true'; hl.dataset.ed = 'h:' + th.dataset.ci; hl.focus();
   const r = document.createRange(); r.selectNodeContents(hl); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
 });
-function selectTgt(t, ci) { const changedT = S.tgt !== t || (t === 'col' && S.selCol !== ci); S.tgt = t; if (t === 'col') S.selCol = ci; if (changedT) { render(); renderColList(); } }
+function selectTgt(t, ci) { if (t !== 'col') S.selRange = null; const changedT = S.tgt !== t || (t === 'col' && S.selCol !== ci); S.tgt = t; if (t === 'col') S.selCol = ci; if (changedT) { render(); renderColList(); } }
 sheet.addEventListener('focusout', (e) => {
   const el = e.target.closest && e.target.closest('[data-ed]'); if (!el || S.tab !== 'design') return;
   const k = el.dataset.ed, lay = L(), v = k.startsWith('line:') ? lineNorm(el.textContent) : norm(el.textContent);
@@ -1098,6 +1150,12 @@ function autoFit(lay, i) {
   if (c.agg && S.ran && S.tab === 'view') w = Math.max(w, textW(fmtAgg(c, filteredRows(), lay), '700 ' + font));
   c.w = Math.max(40, Math.min(520, Math.ceil(w + 16)));
 }
+const otherFields = (lay) => { const on = new Set(lay.cols.map((c) => c.f)); return S.fields.filter((f) => !on.has(f.id)); };
+function toggleGroupField(fid) { apply((l) => { const j = l.groups.findIndex((g) => g.f === fid); if (j >= 0) l.groups.splice(j, 1); else l.groups.push({ f: fid, d: false, by: (S.fIdx.get(fid) || {}).k === 'date' ? 'month' : '' }); }, true); }
+function makeHeadGroup(a, b) {
+  const lay = L(); for (let i = a; i <= b; i++) lay.cols[i].g = 'Nhóm cột'; S.selRange = null; changed(true);
+  setTimeout(() => { const th = sheet.querySelector(`th[data-ed^="grp:${a}:"]`); if (!th) return; th.focus(); const r = document.createRange(); r.selectNodeContents(th); const sl = getSelection(); sl.removeAllRanges(); sl.addRange(r); }, 30);
+}
 function colMenu(e, ci) {
   const lay = L(), c = ci >= 0 ? lay.cols[ci] : null, view = S.tab === 'view';
   const gIdx = (f) => lay.groups.findIndex((g) => g.f === f);
@@ -1107,8 +1165,15 @@ function colMenu(e, ci) {
   if (c) items.push({ t: gIdx(c.f) >= 0 ? `Bỏ nhóm theo "${c.h || fName(c.f)}"` : `Nhóm theo "${c.h || fName(c.f)}"`, fn: () => apply((l) => { const k = l.groups.findIndex((g) => g.f === c.f); if (k >= 0) l.groups.splice(k, 1); else l.groups.push({ f: c.f, d: false, by: colKind(c) === 'date' ? 'month' : '' }); }, true) });
   items.push({ t: 'Nhóm theo các cột', sub: [
     { t: 'Không phân nhóm dữ liệu', ck: !lay.groups.length, fn: () => apply((l) => { l.groups = []; }, true) }, '-',
-    ...visCols.map((x) => { const k = gIdx(x.f); return { t: (k >= 0 ? `${k + 1}. ` : '') + (x.h || fName(x.f)), ck: k >= 0, fn: () => apply((l) => { const j = l.groups.findIndex((g) => g.f === x.f); if (j >= 0) l.groups.splice(j, 1); else l.groups.push({ f: x.f, d: false, by: colKind(x) === 'date' ? 'month' : '' }); }, true) }; }),
+    ...visCols.map((x) => { const k = gIdx(x.f); return { t: (k >= 0 ? `${k + 1}. ` : '') + (x.h || fName(x.f)), ck: k >= 0, fn: () => toggleGroupField(x.f) }; }),
+    ...(otherFields(lay).length ? ['-', { t: 'Cột khác (không hiện trên báo cáo)', sub: otherFields(lay).map((f) => { const k = gIdx(f.id); return { t: (k >= 0 ? `${k + 1}. ` : '') + f.name, ck: k >= 0, fn: () => toggleGroupField(f.id) }; }) }] : []),
   ] });
+  // Gộp tiêu đề: Shift + bấm để chọn nhiều cột liền nhau, rồi "Tạo nhóm cột"
+  if (c && !view) {
+    const rg = S.selRange && ci >= S.selRange[0] && ci <= S.selRange[1] ? S.selRange : [ci, ci];
+    items.push({ t: rg[1] > rg[0] ? `Tạo nhóm cột cho ${rg[1] - rg[0] + 1} cột đã chọn` : 'Tạo nhóm cột (gộp tiêu đề)', fn: () => makeHeadGroup(rg[0], rg[1]) });
+    if (c.g) items.push({ t: `Bỏ nhóm cột "${c.g}"`, fn: () => { const g = c.g; let i = ci; while (i > 0 && lay.cols[i - 1].g === g) i--; for (; i < lay.cols.length && lay.cols[i].g === g; i++) lay.cols[i].g = ''; changed(true); } });
+  }
   items.push({ t: 'Tổng cộng', sub: [
     ...(c ? [{ h: `Cột "${c.h || fName(c.f)}"` }, ...AGGS.map(([v, t]) => ({ t, ck: (c.agg || '') === v, fn: () => apply((l) => { l.cols[ci].agg = v; }, true) })), '-'] : []),
     { t: 'Hiện dòng tổng cộng', ck: !!lay.total, fn: () => apply((l) => { l.total = !l.total; }, true) },
@@ -1136,7 +1201,7 @@ function colMenu(e, ci) {
   items.push({ t: 'Kích cỡ tự động tất cả cột', fn: () => apply((l) => l.cols.forEach((_, i) => autoFit(l, i))) });
   items.push({ t: 'Giãn cách dòng', sub: [['S', 'Hẹp'], ['M', 'Vừa'], ['L', 'Rộng']].map(([v, t]) => ({ t, ck: (lay.pad || 'M') === v, fn: () => apply((l) => { l.pad = v; }) })) });
   if (c && !view) items.push('-', { t: 'Đổi tên cột…', fn: () => { const th = sheet.querySelector(`tr.h1 th[data-ci="${ci}"], tr.h2 th[data-ci="${ci}"]`); if (th) th.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); } });
-  if (c && !view && S.fIdx.get(c.f) && S.fIdx.get(c.f).calc) items.push({ t: 'Sửa công thức…', fn: () => calcEditor(c.f) });
+  if (c && !view && S.fIdx.get(c.f) && S.fIdx.get(c.f).calc) items.push({ t: 'Sửa cột tùy chỉnh…', fn: () => calcEditor(c.f) });
   if (c && !view) items.push({ t: 'Bỏ cột này khỏi báo cáo', fn: () => { L().cols.splice(ci, 1); S.tgt = 'title'; S.selCol = -1; changed(true); } });
   ctxMenu(e.clientX, e.clientY, items);
 }
@@ -1155,7 +1220,6 @@ function tgtStyle() { if (S.tgt === 'col') { const c = L().cols[S.selCol]; if (!
 function syncRibbon() {
   const lay = L(), isCol = S.tgt === 'col' && lay.cols[S.selCol], c = isCol ? lay.cols[S.selCol] : null;
   if ((S.tgt === 'col' && !c) || (S.tgt === 'line' && !curLine())) S.tgt = 'title';
-  $('rTgtName').textContent = c ? 'cột ' + (c.h || fName(c.f)) : (TGT_NAME[S.tgt] || '');
   const s = tgtStyle() || {};
   $('rFont').value = lay.font;
   if (document.activeElement !== $('rFs')) $('rFs').value = S.tgt === 'body' ? lay.fs : (s.fs || ''); $('rFs').placeholder = String(lay.fs);
@@ -1164,11 +1228,10 @@ function syncRibbon() {
   $('rCsw').style.background = s.c || '#000'; $('rBgsw').style.background = s.bg || '#fff';
   const al = c ? alOf(c, lay) : (s.al || ''); $('rAl').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.al === al ? 'true' : 'false'));
   $('rgNum').classList.toggle('off', !c); $('rgCol').classList.toggle('off', !c);
-  $('rColName').textContent = c ? '· ' + (c.h || fName(c.f)) : '(bấm 1 cột trên bảng)';
   if (c) {
-    $('rFmt').value = c.fmt || ''; if (document.activeElement !== $('rH')) $('rH').value = c.h; if (document.activeElement !== $('rG')) $('rG').value = c.g || ''; if (document.activeElement !== $('rW')) $('rW').value = c.w; $('rA').value = c.agg || '';
+    $('rFmt').value = c.fmt || ''; if (document.activeElement !== $('rW')) $('rW').value = c.w; $('rA').value = c.agg || '';
     pressed('rMg', c.mg); pressed('rWrap', c.wrap);
-  } else { $('rH').value = ''; $('rG').value = ''; $('rW').value = ''; }
+  } else { $('rW').value = ''; }
   $('rOrient').value = lay.orient; $('rGridsw').style.background = lay.grid; pressed('rZebra', lay.zebra);
 }
 const selC = () => (S.tgt === 'col' ? L().cols[S.selCol] : null);
@@ -1184,8 +1247,6 @@ $('rAl').addEventListener('click', (e) => { const b = e.target.closest('button')
 $('rFmt').onchange = () => { const c = selC(); if (c) { c.fmt = $('rFmt').value; changed(); } };
 const dpStep = (d) => { const c = selC(); if (!c) return; const cur = colDp(c, L()); const base = cur === '' ? 0 : +cur; c.dp = Math.max(0, Math.min(6, base + d)); if (!c.fmt && colKind(c) !== 'num') c.fmt = 'num'; changed(); };
 $('rDpM').onclick = () => dpStep(-1); $('rDpP').onclick = () => dpStep(1);
-$('rH').addEventListener('input', debounce(() => { const c = selC(); if (c) { c.h = $('rH').value; changed(); renderColList(); } }, 250));
-$('rG').addEventListener('change', () => { const c = selC(); if (c) { c.g = norm($('rG').value); changed(); } });
 $('rW').addEventListener('change', () => { const c = selC(); if (c) { c.w = Math.max(30, Math.min(800, +$('rW').value || 120)); changed(); } });
 $('rA').onchange = () => { const c = selC(); if (c) { c.agg = $('rA').value; changed(true); } };
 $('rMg').onclick = () => { const c = selC(); if (c) { c.mg = !c.mg; changed(true); } };
@@ -1209,7 +1270,7 @@ document.querySelectorAll('.sec h3').forEach((h) => h.addEventListener('click', 
 function newCol(f) { return Object.assign(clone(COLDEF), { f: f.id, h: f.name, w: f.k === 'num' ? 130 : f.k === 'date' ? 90 : Math.min(260, Math.max(110, f.name.length * 8 + 30)), agg: f.k === 'num' && f.type !== FT('AutoNumber', 1005) ? 'sum' : '' }); }
 function renderColList() {
   const lay = L(), on = new Set(lay.cols.map((c) => c.f)), q = fold($('fSearch').value);
-  $('fList').innerHTML = S.fields.filter((f) => !q || fold(f.name).includes(q)).map((f) => `<label class="fitem"><input type="checkbox" data-f="${esc(f.id)}"${on.has(f.id) ? ' checked' : ''}>${tyBadge(f)}<span class="nm" title="${esc(f.name)}">${esc(f.name)}</span>${f.calc ? `<button class="x" data-calc="${esc(f.id)}" title="Sửa cột công thức" aria-label="Sửa cột công thức ${esc(f.name)}" style="border:0;background:none;padding:0 4px;color:#a65400;font-size:12px">Sửa</button>` : ''}</label>`).join('') || '<p class="hint" style="padding:8px">Không thấy cột nào.</p>';
+  $('fList').innerHTML = S.fields.filter((f) => !q || fold(f.name).includes(q)).map((f) => `<label class="fitem"><input type="checkbox" data-f="${esc(f.id)}"${on.has(f.id) ? ' checked' : ''}>${tyBadge(f)}<span class="nm" title="${esc(f.name)}">${esc(f.name)}</span>${f.calc ? `<button class="x" data-calc="${esc(f.id)}" title="Sửa cột tùy chỉnh" aria-label="Sửa cột tùy chỉnh ${esc(f.name)}" style="border:0;background:none;padding:0 4px;color:#a65400;font-size:12px">Sửa</button>` : ''}</label>`).join('') || '<p class="hint" style="padding:8px">Không thấy cột nào.</p>';
   $('colCnt').textContent = `${lay.cols.length}/${S.fields.length}`;
 }
 $('fSearch').addEventListener('input', renderColList);
@@ -1219,17 +1280,17 @@ $('calcAdd').onclick = () => calcEditor(null);
 const FN_HINT = ['IF(điều kiện, đúng, sai)', 'ROUND(số, lẻ)', 'SUM(a, b, …)', 'ABS(số)', 'MIN(…)', 'MAX(…)', 'AND(…)', 'OR(…)', 'IFERROR(giá trị, thay thế)', 'LEFT(chữ, n)', 'RIGHT(chữ, n)', 'UPPER(chữ)', 'YEAR(ngày)', 'MONTH(ngày)', 'DAYS(ngày cuối, ngày đầu)', 'TODAY()', 'CONCAT(…)'];
 function calcEditor(id) {
   const cur = id ? S.cfg.calcs.find((c) => c.id === id) : null, base = azSort(S.baseFields || []);
-  openModal(cur ? 'Sửa cột công thức' : 'Thêm cột công thức',
+  openModal(cur ? 'Sửa cột tùy chỉnh' : 'Tùy chỉnh thêm cột',
     `<p class="hint" style="margin:0">Cột này chỉ tính và hiện trên báo cáo, không thêm vào Base. Tham chiếu cột bằng <b>[Tên cột]</b>; dùng <b>+ − * / ^ %</b>, nối chữ bằng <b>&amp;</b>, so sánh <b>= &lt;&gt; &lt; &gt;</b>.</p>
-     <div class="row" style="align-items:flex-end"><label class="lbl">Tên cột<input type="text" id="cxName" value="${esc(cur ? cur.name : 'Cột công thức ' + (S.cfg.calcs.length + 1))}"></label>
+     <div class="row" style="align-items:flex-end"><label class="lbl">Tên cột<input type="text" id="cxName" value="${esc(cur ? cur.name : 'Cột tùy chỉnh ' + (S.cfg.calcs.length + 1))}"></label>
      <label class="lbl fit" style="width:130px">Kiểu kết quả<select id="cxK"><option value="num">Số</option><option value="text">Chữ</option><option value="date">Ngày</option></select></label></div>
      <label class="lbl">Công thức<textarea id="cxExpr" rows="3" style="min-height:70px;font:13px ui-monospace,Consolas,monospace" placeholder="vd. [Số lượng] * [Đơn giá]   hoặc   IF([Thành tiền] > 1000000, &quot;Lớn&quot;, &quot;Nhỏ&quot;)">${esc(cur ? cur.expr : '')}</textarea></label>
      <div id="cxPrev" class="msg">Gõ công thức để xem thử.</div>
      <div class="sub">Bấm để chèn cột</div><div class="chips" id="cxCols" style="max-height:110px;overflow:auto">${base.map((f) => `<button data-ins="[${esc(f.name)}]">${esc(f.name)}</button>`).join('')}</div>
      <div class="sub">Hàm</div><div class="chips" id="cxFns">${FN_HINT.map((t) => `<button data-ins="${esc(t.split('(')[0])}(" title="${esc(t)}">${esc(t.split('(')[0])}</button>`).join('')}</div>`,
-    [...(cur ? [['Xóa cột công thức', () => { if (!confirm('Xóa cột công thức "' + cur.name + '"?')) return; S.cfg.calcs = S.cfg.calcs.filter((c) => c.id !== cur.id); for (const l of S.cfg.layouts) { l.cols = l.cols.filter((c) => c.f !== cur.id); l.groups = l.groups.filter((g) => g.f !== cur.id); l.sort = l.sort.filter((x) => x.f !== cur.id); } S.cfg.filters = S.cfg.filters.filter((F) => F.f !== cur.id); refreshFields(); S.selCol = -1; S.tgt = 'title'; closeModal(); changed(true); }, 'danger']] : []),
+    [...(cur ? [['Xóa cột này', () => { if (!confirm('Xóa cột tùy chỉnh "' + cur.name + '"?')) return; S.cfg.calcs = S.cfg.calcs.filter((c) => c.id !== cur.id); for (const l of S.cfg.layouts) { l.cols = l.cols.filter((c) => c.f !== cur.id); l.groups = l.groups.filter((g) => g.f !== cur.id); l.sort = l.sort.filter((x) => x.f !== cur.id); } S.cfg.filters = S.cfg.filters.filter((F) => F.f !== cur.id); refreshFields(); S.selCol = -1; S.tgt = 'title'; closeModal(); changed(true); }, 'danger']] : []),
      ['Lưu cột', () => {
-       const name = norm($('cxName').value) || 'Cột công thức', expr = $('cxExpr').value.trim(), k = $('cxK').value;
+       const name = norm($('cxName').value) || 'Cột tùy chỉnh', expr = $('cxExpr').value.trim(), k = $('cxK').value;
        try { compileCalc(expr, cur ? cur.id : null); } catch (e) { $('cxPrev').className = 'msg err'; $('cxPrev').textContent = 'Chưa lưu được: ' + e.message; return; }
        if (cur) Object.assign(cur, { name, expr, k }); else { const c = { id: 'calc_' + uid(), name, expr, k }; S.cfg.calcs.push(c); refreshFields(); L().cols.push(newCol(S.fIdx.get(c.id))); S.tgt = 'col'; S.selCol = L().cols.length - 1; }
        refreshFields(); for (const l of S.cfg.layouts) for (const c of l.cols) if (cur && c.f === cur.id && (!c.h || c.h === cur.name)) c.h = name;
@@ -1354,31 +1415,30 @@ async function ensureData(force) {
 }
 
 /* ---------------- thanh công cụ xem ---------------- */
+// Thanh cấp nhóm: 1 = chỉ nhóm cấp 1, 2 = tới cấp 2 …, "Tất cả" = mở cả dòng chi tiết
 function renderLevels() {
-  const n = (L().groups || []).length; $('vLevels').innerHTML = n > 1 ? Array.from({ length: n }, (_, i) => `<button data-lv="${i + 1}" title="Hiện tới nhóm cấp ${i + 1}">${i + 1}</button>`).join('') : '';
-  $('vLevels').hidden = n < 2; $('vOpen').disabled = $('vClose').disabled = !n || !S.ran;
+  const n = (L().groups || []).filter((g) => S.fIdx.has(g.f)).length; $('vLvBox').hidden = !n || !S.ran;
+  $('vLevels').innerHTML = Array.from({ length: n }, (_, i) => `<button data-lv="${i}" title="Chỉ hiện tới nhóm cấp ${i + 1}">${i + 1}</button>`).join('') + `<button data-lv="99" title="Mở tất cả, gồm dòng chi tiết">Tất cả</button>`;
 }
-$('vLevels').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) openAll(+b.dataset.lv - 1); });
+$('vLevels').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) openAll(+b.dataset.lv); });
 function openAll(lvOpen) {
   const lay = L(), groups = lay.groups.filter((g) => S.fIdx.has(g.f)); S.open = {};
   let rows = filteredRows(); if (lay.mode === 'sum') rows = summarize(rows, lay);
   const walk = (nodes, lv) => { for (const n of nodes || []) { S.open[n.key] = lv < lvOpen; walk(n.kids, lv + 1); } };
   walk(buildTree(rows, groups, 0, '', lay), 0); render();
 }
-$('vOpen').onclick = () => openAll(99); $('vClose').onclick = () => openAll(0);
 $('vSearch').addEventListener('input', debounce(() => { S.q = $('vSearch').value; S.cap = VIEW_CAP; render(); }, 200));
 $('vZoom').onchange = () => { S.zoom = +$('vZoom').value; render(); };
-$('vRefresh').onclick = () => runReport(true);
 $('vPrint').onclick = () => { if (!S.ran) return toast('Bấm Báo cáo trước khi in.'); doPrint(); };
 $('vXlsx').onclick = () => { if (!S.ran) return toast('Bấm Báo cáo trước khi tải Excel.'); exportXlsx().catch((e) => { dlog('xlsx.error', String(e && e.message || e)); toast('Không xuất được Excel: ' + (e && e.message || e), 6000); }); };
 function setTab(t) {
   S.tab = t; S.vlay = null; if (S.cfg && !S.dash) { const o = loadRunState() || {}; try { const v = JSON.stringify({ ...o, fv: o.fv || {}, cur: S.cfg.cur, at: Date.now(), tab: t, ran: t === 'view' ? !!o.ran : false }); sessionStorage.setItem(runKey(), v); localStorage.setItem(runKey(), v); } catch (e) {} } document.querySelectorAll('#modeTabs button').forEach((b) => b.classList.toggle('on', b.dataset.m === t));
-  $('pDesign').hidden = t !== 'design'; $('pView').hidden = t !== 'view'; $('ribbon').hidden = t !== 'design'; $('barView').hidden = t !== 'view';
+  $('pDesign').hidden = t !== 'design'; $('pView').hidden = t !== 'view'; $('sTitle').textContent = t === 'view' ? 'Điều kiện lọc' : 'Thiết lập báo cáo'; $('fvReset').hidden = t !== 'view'; $('ribbon').hidden = t !== 'design'; $('barView').hidden = t !== 'view';
   if (t === 'view') renderViewFilters(); else syncDesignUI();
   render();
 }
 $('modeTabs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setTab(b.dataset.m); });
-$('btnSide').onclick = () => document.body.classList.toggle('sidehid');
+$('btnSide').onclick = () => { const h = document.body.classList.toggle('sidehid'); $('btnSide').textContent = h ? '»' : '«'; $('btnSide').title = h ? 'Mở thanh bên' : 'Thu gọn thanh bên'; setTimeout(() => S.cfg && render(), 0); };
 
 /* ---------------- in ---------------- */
 function doPrint() {
@@ -1625,10 +1685,10 @@ $('selPack').onchange = () => { S.cfg.src.packId = $('selPack').value; S.cfg.src
 function packStale() { const sig = new Set(S.cfg.src.packSig || []); return packNeeded().map((f) => f.id).filter((id) => !sig.has(id)); }
 function packHint() {
   if (!isEdit()) return; const el = $('packHint');
-  if (!S.cfg.src.packId) { el.innerHTML = 'Khối cần 1 cột công thức "gói" các cột báo cáo dùng, để người xem luôn thấy dữ liệu mới. Bấm <b>Tạo / cập nhật cột gói</b>.'; el.style.color = 'var(--warn)'; return; }
+  if (!S.cfg.src.packId) { el.textContent = 'Chưa có cột gói — bấm Tạo / cập nhật cột gói.'; el.style.color = 'var(--warn)'; return; }
   const st = packStale();
-  if (st.length) { el.textContent = `Cột gói chưa có ${st.length} cột mới (${st.slice(0, 3).map(fName).join(', ')}${st.length > 3 ? '…' : ''}). Bấm "Tạo / cập nhật cột gói" trước khi Lưu khối.`; el.style.color = 'var(--warn)'; }
-  else { el.textContent = `Cột gói khớp ${packNeeded().length} cột báo cáo đang dùng.`; el.style.color = 'var(--ok)'; }
+  if (st.length) { el.textContent = `Cột gói thiếu ${st.length} cột — bấm Tạo / cập nhật cột gói.`; el.title = st.map(fName).join(', '); el.style.color = 'var(--warn)'; }
+  else { el.textContent = `✓ Cột gói đủ ${packNeeded().length} cột.`; el.style.color = 'var(--ok)'; }
 }
 async function makePack() {
   if (!S.table) return toast('Chưa chọn bảng.');
@@ -1706,7 +1766,7 @@ async function saveDash() {
     const html = early ? `<p class="msg err">${esc(early)}</p>`
       : result === 'ok' ? `<p class="msg ok"><b>Đã lưu khối — Lark đã xác nhận.</b><br>Báo cáo "${esc(L().title)}" · ${S.cfg.layouts.length} mẫu. Người xem chọn điều kiện lọc rồi bấm <b>Báo cáo</b> để xem dữ liệu.</p><p class="msg warn">Nếu Base App có chế độ chỉnh sửa / phát hành, hãy bấm <b>Phát hành (Publish)</b> để người xem thấy bản mới.</p>`
       : result === 'nogroup' ? `<p class="msg warn"><b>Đã lưu thiết kế nhưng Lark chưa nhận cột gói</b>${err ? ' (' + esc(err) + ')' : ''}. Bấm "Kiểm tra" ở mục Nguồn dữ liệu rồi Lưu khối lần nữa.</p>`
-      : `<p class="msg err"><b>Lark chưa xác nhận lưu khối</b>${err ? ' (' + esc(err) + ')' : ''}. Bấm Lưu khối lần nữa; nếu vẫn lỗi, mở ⋯ → Chẩn đoán và gửi lại.</p>`;
+      : `<p class="msg err"><b>Lark chưa xác nhận lưu khối</b>${err ? ' (' + esc(err) + ')' : ''}. Bấm Lưu khối lần nữa; nếu vẫn lỗi, bấm Ctrl + Shift + D để mở khung chẩn đoán và gửi lại.</p>`;
     openModal(result === 'ok' && !early ? 'Đã lưu khối' : 'Kết quả lưu khối', html);
     if (result === 'ok') { dirty = false; setStatus('ok', 'Đã lưu khối'); }
   }
@@ -1742,12 +1802,12 @@ function startLive(c) {
 }
 function showErr(e) { const m = String(e && e.message || e); setStatus('err', 'Chưa đọc được dữ liệu'); S.loading = false; $('sheet').innerHTML = `<div class="empty"><p class="msg err" style="display:inline-block;max-width:640px;text-align:left">${esc(m)}</p></div>`; dlog('error', m); }
 async function bootView() {
-  document.body.classList.add('dashview'); $('modeTabs').hidden = true;
+  document.body.classList.add('dashview'); $('modeTabs').hidden = true; $('btnMore').hidden = true;
   const c = await getDashCfg();
   if (!c) { setStatus('wait', 'Khối chưa cấu hình'); $('ribbon').hidden = true; $('pDesign').hidden = true; $('sheet').innerHTML = '<div class="empty">Khối báo cáo chưa được thiết lập. Người sửa khối hãy bấm <b>Sửa khối</b> → thiết kế → <b>Lưu khối</b>.</div>'; return; }
   const dc = c.__dc, ts = c.__ts; S.cfg = fixCfg(c); S.cfg.__dc = dc; S.cfg.__ts = ts; S.cfg.src = c.src;
   setFields((c.src.packCols || []).map((f) => ({ id: f.id, name: f.name, type: f.type, k: f.k || 'text' })));
-  initFv(); S.rows = []; S.ran = false; setTab('view'); setStatus('ok', 'Sẵn sàng — chọn điều kiện rồi bấm Báo cáo');
+  initFv(); S.rows = []; S.ran = false; setTab('view'); setStatus('ok', 'Sẵn sàng');
   await restoreRun().catch((e) => dlog('restore.error', String(e && e.message || e)));
 }
 
@@ -1757,10 +1817,11 @@ $('btnMore').onclick = (e) => {
   showMenu(r.right - 230, r.bottom + 4, [
     !isView() ? ['Sao chép cấu hình báo cáo', async () => { const ok = await copyText(JSON.stringify({ rs: VER, ...S.cfg })); toast(ok ? 'Đã chép cấu hình — dán sang extension / khối khác bằng "Dán cấu hình".' : 'Trình duyệt chặn sao chép.'); }] : null,
     !isView() ? ['Dán cấu hình báo cáo…', () => openModal('Dán cấu hình báo cáo', '<p class="hint">Dán đoạn cấu hình đã sao chép. Cột không có trong bảng hiện tại sẽ bị bỏ qua.</p><textarea id="pasteCfg" placeholder="{ … }"></textarea>', [['Áp dụng', () => { try { const o = JSON.parse($('pasteCfg').value); const src = S.cfg.src; S.cfg = fixCfg(o); S.cfg.src = src; initFv(); S.open = {}; S.selCol = -1; S.tgt = 'title'; closeModal(); changed(true); toast('Đã áp dụng cấu hình.'); } catch (x) { toast('Cấu hình không hợp lệ: ' + x.message, 6000); } }, 'primary']])] : null,
-    !isView() ? '-' : null,
-    ['Chẩn đoán', () => { const t = JSON.stringify({ ver: VER, dash: S.dash, table: S.tableMeta && S.tableMeta.name, rows: S.rows.length, fields: S.fields.length, log: diag }, null, 1); openModal('Chẩn đoán', `<pre>${esc(t)}</pre>`, [['Sao chép', async () => toast((await copyText(t)) ? 'Đã chép.' : 'Không chép được.')]]); }],
   ]);
 };
+// Khung chẩn đoán: chỉ mở bằng phím tắt Ctrl + Shift + D
+function showDiag() { const t = JSON.stringify({ ver: VER, dash: S.dash, table: S.tableMeta && S.tableMeta.name, rows: S.rows.length, fields: S.fields.length, log: diag }, null, 1); openModal('Chẩn đoán', `<pre>${esc(t)}</pre>`, [['Sao chép', async () => toast((await copyText(t)) ? 'Đã chép.' : 'Không chép được.')]]); }
+document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) { e.preventDefault(); showDiag(); } });
 
 /* =====================================================================
    KHỞI ĐỘNG
