@@ -355,7 +355,7 @@ body.dashview .top{display:none}
       <label class="lbl">View (lọc sẵn của Lark)<select id="selView"></select></label>
       <div id="packBox" hidden style="display:flex;flex-direction:column;gap:6px">
         <label class="lbl">Cột gói dữ liệu<select id="selPack" title="Cột công thức gom các cột báo cáo dùng, để khối luôn lấy được dữ liệu mới"></select></label>
-        <div class="row"><button id="btnPack">Tạo / cập nhật cột gói</button><button id="btnPackTest" class="fit">Kiểm tra</button></div>
+        <div class="row"><button id="btnPack" title="Không bắt buộc: Lưu khối sẽ tự làm việc này">Cập nhật cột gói ngay</button><button id="btnPackTest" class="fit">Kiểm tra</button></div>
         <p class="hint" id="packHint"></p>
       </div>
     </div>
@@ -417,7 +417,7 @@ body.dashview .top{display:none}
 const SDK_URL = 'https://esm.sh/@lark-base-open/js-sdk@1.0.2';
 const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
 const PACK_SEP = '‖', PACK_TAG = '§', PACK_NAME = 'Gói dữ liệu báo cáo';
-const BLOCK_MAX = 12000, VER = '1.7', VIEW_CAP = Infinity, CACHE_MS = 60000;
+const BLOCK_MAX = 12000, VER = '1.8', VIEW_CAP = Infinity, CACHE_MS = 60000;
 let SDK = null, bitable = null, dashboard = null, workspace = null, FieldType = null;
 const FT = (k, d) => (FieldType && FieldType[k] !== undefined ? FieldType[k] : d);
 
@@ -1876,15 +1876,15 @@ $('selPack').onchange = () => { S.cfg.src.packId = $('selPack').value; S.cfg.src
 function packStale() { const sig = new Set(S.cfg.src.packSig || []); return packNeeded().map((f) => f.id).filter((id) => !sig.has(id)); }
 function packHint() {
   if (!isEdit()) return; const el = $('packHint');
-  if (!S.cfg.src.packId) { el.textContent = 'Chưa có cột gói — bấm Tạo / cập nhật cột gói.'; el.style.color = 'var(--warn)'; return; }
+  if (!S.cfg.src.packId) { el.textContent = 'Chưa có cột gói — Lưu khối sẽ tự tạo.'; el.style.color = 'var(--muted)'; return; }
   const st = packStale();
-  if (st.length) { el.textContent = `Cột gói thiếu ${st.length} cột — bấm Tạo / cập nhật cột gói.`; el.title = st.map(fName).join(', '); el.style.color = 'var(--warn)'; }
+  if (st.length) { el.style.color = 'var(--muted)'; el.textContent = `Cột gói thiếu ${st.length} cột — Lưu khối sẽ tự cập nhật.`; el.title = st.map(fName).join(', '); }
   else { el.textContent = `✓ Cột gói đủ ${packNeeded().length} cột.`; el.style.color = 'var(--ok)'; }
 }
-async function makePack() {
-  if (!S.table) return toast('Chưa chọn bảng.');
-  const cols = packNeeded(); if (!cols.length) return toast('Báo cáo chưa dùng cột nào.');
-  const formula = packFormula(cols); let done = false, err = '';
+// Tạo / cập nhật cột gói (không hiện hộp thoại) — Lưu khối gọi hàm này tự động
+async function ensurePack() {
+  const cols = packNeeded(), formula = packFormula(cols); let done = false, err = '';
+  if (!S.table) return { done, err: 'chưa chọn bảng', cols, formula }; if (!cols.length) return { done, err: 'báo cáo chưa dùng cột nào', cols, formula };
   try {
     let fid = $('selPack').value || (S.metas.find((m) => m.name === PACK_NAME) || {}).id;
     if (!fid) { const r = await withTimeout(S.table.addField({ type: FT('Formula', 20), name: PACK_NAME }), 15000); fid = typeof r === 'string' ? r : (r && (r.fieldId || r.id)); }
@@ -1894,7 +1894,13 @@ async function makePack() {
     S.metas = (await withTimeout(S.table.getFieldMetaList(), 15000)) || S.metas;
     S.cfg.src.packId = fid; S.cfg.src.packSig = cols.map((c) => c.id); fillPackSelect(); done = true;
   } catch (e) { err = String(e && e.message || e); dlog('pack.create.error', err); }
-  let check = null; if (done) { await sleep(1500); check = await previewPack(true); }
+  let check = null; if (done) { await sleep(1500); check = await previewPack(true); if (!(check && check.ok)) { await sleep(2500); check = await previewPack(true); } } // công thức mới cần vài giây để Lark tính
+  return { done, err, cols, formula, check };
+}
+async function makePack() {
+  if (!S.table) return toast('Chưa chọn bảng.'); if (!packNeeded().length) return toast('Báo cáo chưa dùng cột nào.');
+  toast('Đang tạo / cập nhật cột gói…', 8000);
+  const { done, err, cols, formula, check } = await ensurePack();
   openModal('Cột gói dữ liệu cho khối',
     (done ? `<p class="msg ${check && check.ok ? 'ok' : 'warn'}">Đã tạo / cập nhật cột <b>${esc(PACK_NAME)}</b>. ${esc(check ? check.msg : '')}</p>`
       : `<p class="msg warn">Không tự tạo được cột (${esc(err)}). Làm thủ công: trong bảng <b>${esc(S.tableMeta.name)}</b> thêm cột kiểu <b>Công thức</b> tên <b>${esc(PACK_NAME)}</b>, dán công thức dưới đây, rồi chọn cột đó ở ô "Cột gói".</p>`)
@@ -1934,11 +1940,18 @@ async function saveDash() {
   if (S.tab !== 'design') setTab('design');
   if (!S.cfg.src.tableId) return flagFix($('selTable'), 'Chọn bảng dữ liệu trước khi Lưu khối.');
   if (!L().cols.length) return flagFix($('fList'), 'Báo cáo chưa có cột nào.');
-  const packId = S.cfg.src.packId; if (!packId) return flagFix($('btnPack'), 'Khối cần cột gói: bấm "Tạo / cập nhật cột gói".');
-  if (packStale().length) { const ck = await previewPack(true).catch(() => null); if (!(ck && ck.ok)) return flagFix($('btnPack'), 'Cột gói chưa có đủ cột báo cáo đang dùng: bấm "Tạo / cập nhật cột gói" rồi Lưu khối.'); }
   const btn = $('btnDashSave'); btn.disabled = true; S.saving = true; let result = 'fail', err = '', early = '';
   const step = (t) => { const el = $('saveStep'); if (el) el.textContent = t; };
   openModal('Đang lưu khối', '<p id="saveStep" style="font-weight:600;margin:0">Đang chuẩn bị…</p><p class="hint">Đừng đóng khung sửa khối cho tới khi có kết quả.</p>'); $('mClose').hidden = true;
+  // cột gói: tự tạo / cập nhật khi thiếu cột, người thiết kế không phải bấm riêng
+  let packOk = !!S.cfg.src.packId && !packStale().length;
+  if (S.cfg.src.packId && !packOk) { step('Kiểm tra cột gói…'); const ck = await previewPack(true).catch(() => null); packOk = !!(ck && ck.ok); }
+  if (!packOk) {
+    step('Tự tạo / cập nhật cột gói (' + packNeeded().length + ' cột)…'); const r = await ensurePack().catch((e) => ({ done: false, err: String(e && e.message || e) }));
+    packOk = !!(r.done && r.check && r.check.ok); dlog('save.autopack', { done: r.done, ok: packOk, err: r.err || '' });
+    if (!packOk) { btn.disabled = false; S.saving = false; $('mClose').hidden = false; closeModal(); if (!r.done) return makePack(); return flagFix($('btnPack'), 'Đã cập nhật cột gói nhưng Lark chưa tính xong — đợi vài giây rồi bấm Lưu khối lại.'); }
+  }
+  const packId = S.cfg.src.packId;
   try {
     await baseTokenNow(); const ts = Date.now();
     const packCols = packNeeded().map((f) => ({ id: f.id, name: f.name, type: f.type, k: f.k }));
@@ -2060,6 +2073,12 @@ async function refreshLive0(c, quiet, tok, key) {
       S.rows = computeCalcs(chunked.rows); S.rowsAt = Date.now(); S.fromCache = 0; LC.set('live|' + key, { at: S.rowsAt, rows: chunked.rows, capped: chunked.capped }); S.liveAt = Date.now(); setStatus('ok', 'Đã cập nhật ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
       dlog('chunk.done', `${chunked.n} đợt · ${chunked.rows.length} dòng${chunked.capped ? ' · vẫn có ngày vượt giới hạn' : ''}`); return;
     }
+    if (!data || (ungrouped(data) && rows0(data) > 0) || !c.src.packId) { // cột gói không dùng được → thử đọc thẳng bảng
+      try { const r = await directRead(c, { chk, onPage: (n, p) => { if (quiet && S.ran) return; S.loadCount = n; const e2 = $('ldCount'); if (e2) e2.textContent = ` ${n.toLocaleString('vi-VN')} dòng (đọc thẳng)`; $('sline').textContent = `Đang đọc thẳng bảng… ${n.toLocaleString('vi-VN')} dòng`; } });
+        chk(); S.capped = false; S.fetchHow = 'đọc thẳng'; S.fetchFi = 'direct'; S.rows = computeCalcs(r.rows); S.rowsAt = Date.now(); S.liveAt = Date.now(); S.fromCache = 0; if (r.rows.length) LC.set('live|' + key, { at: S.rowsAt, rows: r.rows, capped: false });
+        dlog('direct.done', `${r.rows.length} dòng · ${r.pages} trang · ${r.ms}ms`); setStatus('ok', 'Đã cập nhật ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })); return;
+      } catch (e) { if (isCancel(e)) throw e; dlog('direct.error', String(e && e.message || e)); }
+    }
     if (data && ungrouped(data) && rows0(data) > 0) throw new Error('Lark chỉ trả tổng số thay vì từng dòng: khối chưa được nhóm theo cột gói. Người sửa khối hãy mở Sửa khối → Kiểm tra → Lưu khối.');
     const rows = unpackRows(data || [], c.src.packCols);
     if (rows.missing.length) throw new Error('Cột gói thiếu dữ liệu của: ' + rows.missing.map((f) => f.name).join(', ') + '. Mở Sửa khối → Tạo / cập nhật cột gói → Lưu khối.');
@@ -2067,6 +2086,45 @@ async function refreshLive0(c, quiet, tok, key) {
     if (S.capped) dlog('live.cap', `Lark trả ${rows0(data)} nhóm (chạm giới hạn) · ${how}`);
     S.rows = computeCalcs(rows); S.rowsAt = Date.now(); S.liveAt = Date.now(); S.fromCache = 0; if (rows.length) LC.set('live|' + key, { at: S.rowsAt, rows: [...rows], capped: S.capped }); setStatus('ok', 'Đã cập nhật ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
   } finally { if (!tok.stop) { S.liveBusy = false; S.loading = false; if (quiet && S.ran) render(); } }
+}
+/* ---------- THỬ NGHIỆM: đọc thẳng bảng ở chế độ xem khối (không qua cột gói) ---------- */
+async function directTable(c) {
+  let base = bitable.base; const tk = c.src.baseToken;
+  if (tk && workspace && workspace.getBitable) { const app = await withTimeout(workspace.getBitable(tk), 8000); if (!app || !app.base) throw new Error('không mở được base nguồn'); base = app.base; }
+  const t = await withTimeout(base.getTableById(c.src.tableId), 8000); if (!t) throw new Error('không mở được bảng'); return t;
+}
+// đọc tối đa maxRows dòng (Infinity = hết bảng); trả {rows, ms, pages, more}
+async function directRead(c, opt) {
+  opt = opt || {}; const t0 = performance.now(), chk = opt.chk || (() => {}), table = await directTable(c); chk();
+  let want = null; if (c.src.viewId) { try { const v = await withTimeout(table.getViewById(c.src.viewId), 8000); want = new Set(((await withTimeout(v.getVisibleRecordIdList(), 30000)) || []).filter(Boolean)); } catch (e) { dlog('direct.view.error', String(e && e.message || e)); } }
+  const getPage = table.getRecordsByPage ? (o) => table.getRecordsByPage(o) : (o) => table.getRecords(o);
+  const out = []; let token, pages = 0, more = false; const max = opt.maxRows || Infinity;
+  while (pages < 2000) {
+    chk(); const res = await withTimeout(getPage({ pageSize: 200, pageToken: token }), 25000); pages++;
+    for (const r of (res && res.records) || []) { if (!r || (want && !want.has(r.recordId))) continue; const o = {}; for (const f of S.fields) if (!f.calc) o[f.id] = cellVal(f, r.fields ? r.fields[f.id] : undefined); out.push(o); }
+    if (opt.onPage) opt.onPage(out.length, pages);
+    const nx = res && res.pageToken; more = !!(res && res.hasMore && nx !== undefined && nx !== null && nx !== '' && nx !== token);
+    if (!more || out.length >= max) break; token = nx;
+  }
+  return { rows: out, ms: Math.round(performance.now() - t0), pages, more };
+}
+async function probeDirect() {
+  const el = $('probeOut'); const say = (h) => { if (el) el.innerHTML = h; };
+  say('Đang thử đọc thẳng bảng (tối đa 2.000 dòng)…');
+  const c = S.cfg; if (!c || !c.src || !c.src.tableId) return say('Khối chưa cấu hình.');
+  const r0 = { mode: S.dash, table: c.src.tableId, base: c.src.baseToken ? 'base khác' : 'base hiện tại' };
+  try {
+    const r = await directRead(c, { maxRows: 2000, onPage: (n, p) => say(`Đang đọc… trang ${p} · ${n} dòng`) });
+    const perPage = Math.round(r.ms / Math.max(1, r.pages)), tot = Math.max(S.rows.length, r.rows.length), est = Math.round(Math.ceil(tot / 200) * perPage / 1000);
+    const filled = r.rows.length ? S.fields.filter((f) => !f.calc && r.rows.some((x) => x[f.id] !== null && x[f.id] !== undefined && x[f.id] !== '')).length : 0;
+    const res = { ...r0, ok: true, rows: r.rows.length, pages: r.pages, ms: r.ms, msPerPage: perPage, coCotCoDuLieu: filled + '/' + S.fields.filter((f) => !f.calc).length, uocTinh: tot ? `${tot} dòng ≈ ${est}s` : '' };
+    dlog('probe.direct', res);
+    say(`<p class="msg ok"><b>ĐỌC THẲNG ĐƯỢC.</b> ${r.rows.length.toLocaleString('vi-VN')} dòng / ${r.pages} trang trong ${(r.ms / 1000).toFixed(1)}s (≈${perPage} ms/trang 200 dòng). Cột có dữ liệu: ${res.coCotCoDuLieu}.${tot ? ` Ước tính ${tot.toLocaleString('vi-VN')} dòng mất khoảng ${est}s.` : ''}</p>`);
+  } catch (e) {
+    const m = String(e && e.message || e); dlog('probe.direct', { ...r0, ok: false, error: m });
+    say(`<p class="msg warn"><b>KHÔNG đọc thẳng được</b> ở chế độ này: ${esc(m)}. Vẫn cần cột gói.</p>`);
+  }
+  const pre = $('mBody') && $('mBody').querySelector('pre'); if (pre) pre.textContent = JSON.stringify({ ver: VER, dash: S.dash, rows: S.rows.length, log: diag }, null, 1);
 }
 function startLive(c) {
   S.liveCfg = c; if (S.liveHooked) return; S.liveHooked = true;
@@ -2094,7 +2152,7 @@ $('btnMore').onclick = (e) => {
   ]);
 };
 // Khung chẩn đoán: chỉ mở bằng phím tắt Ctrl + Shift + D
-function showDiag() { const t = JSON.stringify({ ver: VER, dash: S.dash, table: S.tableMeta && S.tableMeta.name, rows: S.rows.length, fields: S.fields.length, log: diag }, null, 1); openModal('Chẩn đoán', `<pre>${esc(t)}</pre>`, [['Sao chép', async () => toast((await copyText(t)) ? 'Đã chép.' : 'Không chép được.')]]); }
+function showDiag() { const t = JSON.stringify({ ver: VER, dash: S.dash, table: S.tableMeta && S.tableMeta.name, rows: S.rows.length, fields: S.fields.length, log: diag }, null, 1); openModal('Chẩn đoán', `<div id="probeOut" class="hint" style="margin-bottom:6px"></div><pre>${esc(t)}</pre>`, [['Thử đọc thẳng bảng', () => probeDirect()], ['Sao chép', async () => { const x = JSON.stringify({ ver: VER, dash: S.dash, table: S.tableMeta && S.tableMeta.name, rows: S.rows.length, fields: S.fields.length, log: diag }, null, 1); toast((await copyText(x)) ? 'Đã chép.' : 'Không chép được.'); }]]); }
 document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) { e.preventDefault(); showDiag(); } });
 
 /* =====================================================================
