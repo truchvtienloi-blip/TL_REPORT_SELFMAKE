@@ -417,7 +417,7 @@ body.dashview .top{display:none}
 const SDK_URL = 'https://esm.sh/@lark-base-open/js-sdk@1.0.2';
 const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
 const PACK_SEP = '‖', PACK_TAG = '§', PACK_NAME = 'Gói dữ liệu báo cáo';
-const BLOCK_MAX = 12000, VER = '1.8', VIEW_CAP = Infinity, CACHE_MS = 60000;
+const BLOCK_MAX = 12000, VER = '1.8.2', VIEW_CAP = Infinity, CACHE_MS = 60000;
 let SDK = null, bitable = null, dashboard = null, workspace = null, FieldType = null;
 const FT = (k, d) => (FieldType && FieldType[k] !== undefined ? FieldType[k] : d);
 
@@ -864,6 +864,7 @@ function reportHTML(lay, rows, mode, fv, availW) {
   h += `<div class="rh"><div class="rt${sel('title')}" data-tg="title" style="${css(sty.title)}"${ed('title')}>${esc(lay.title)}</div>`;
   h += linesHTML(lay, 'top', rows, fv, design);
   if (!design && mode === 'view' && S.ran && !S.loading && S.capped) h += `<div class="capw">Lark chỉ trả tối đa ${LARK_CAP.toLocaleString('vi-VN')} nhóm dữ liệu mỗi lần lấy — kết quả có thể chưa đủ. Hãy thu hẹp khoảng ngày${S.fetchFi ? '' : ' (lọc ngày chỉ gửi lên Lark được với cột Ngày gốc của Lark)'}.</div>`;
+  if (!design && mode === 'view' && S.ran && !S.loading && S.fetchFi === 'direct') h += `<div class="capw">Khối không đọc được cột gói nên dữ liệu được đọc thẳng từ bảng theo quyền của tài khoản bạn. Nếu bạn chỉ được xem một phần dòng, báo cáo sẽ thiếu. Nhờ người quản trị cấp quyền xem cột "${esc(PACK_NAME)}" cho vai trò của bạn.</div>`;
   if (lay.showF && !design) for (const t of filterLines(fv)) h += `<div class="rfl">${esc(t)}</div>`;
   h += `</div>`;
   if (!ci.length) return h + `<div class="empty">${design ? 'Chưa có cột nào. Tick cột ở mục <b>2 · Cột hiển thị</b> bên trái.' : 'Báo cáo chưa có cột.'}</div></div>`;
@@ -2097,33 +2098,43 @@ async function directTable(c) {
 async function directRead(c, opt) {
   opt = opt || {}; const t0 = performance.now(), chk = opt.chk || (() => {}), table = await directTable(c); chk();
   let want = null; if (c.src.viewId) { try { const v = await withTimeout(table.getViewById(c.src.viewId), 8000); want = new Set(((await withTimeout(v.getVisibleRecordIdList(), 30000)) || []).filter(Boolean)); } catch (e) { dlog('direct.view.error', String(e && e.message || e)); } }
-  const getPage = table.getRecordsByPage ? (o) => table.getRecordsByPage(o) : (o) => table.getRecords(o);
+  const small = table.getRecordsByPage ? (o) => table.getRecordsByPage(o) : (o) => table.getRecords(o);
+  let big = S.bigPage !== false && !!table.getRecords, size = big ? 5000 : 200;
   const out = []; let token, pages = 0, more = false; const max = opt.maxRows || Infinity;
   while (pages < 2000) {
-    chk(); const res = await withTimeout(getPage({ pageSize: 200, pageToken: token }), 25000); pages++;
+    chk(); let res;
+    if (big) { try { res = await withTimeout(table.getRecords({ pageSize: size, pageToken: token }), 60000); if (pages === 0 && res && res.hasMore && ((res.records || []).length <= 200)) { S.bigPage = false; big = false; size = 200; } else S.bigPage = true; } catch (e) { dlog('direct.big.error', String(e && e.message || e)); S.bigPage = false; big = false; size = 200; if (pages) throw e; res = null; } }
+    if (!res) res = await withTimeout(small({ pageSize: 200, pageToken: token }), 25000);
+    pages++;
     for (const r of (res && res.records) || []) { if (!r || (want && !want.has(r.recordId))) continue; const o = {}; for (const f of S.fields) if (!f.calc) o[f.id] = cellVal(f, r.fields ? r.fields[f.id] : undefined); out.push(o); }
     if (opt.onPage) opt.onPage(out.length, pages);
     const nx = res && res.pageToken; more = !!(res && res.hasMore && nx !== undefined && nx !== null && nx !== '' && nx !== token);
     if (!more || out.length >= max) break; token = nx;
   }
-  return { rows: out, ms: Math.round(performance.now() - t0), pages, more };
+  return { rows: out, ms: Math.round(performance.now() - t0), pages, more, size };
 }
 async function probeDirect() {
   const el = $('probeOut'); const say = (h) => { if (el) el.innerHTML = h; };
-  say('Đang thử đọc thẳng bảng (tối đa 2.000 dòng)…');
   const c = S.cfg; if (!c || !c.src || !c.src.tableId) return say('Khối chưa cấu hình.');
-  const r0 = { mode: S.dash, table: c.src.tableId, base: c.src.baseToken ? 'base khác' : 'base hiện tại' };
-  try {
-    const r = await directRead(c, { maxRows: 2000, onPage: (n, p) => say(`Đang đọc… trang ${p} · ${n} dòng`) });
-    const perPage = Math.round(r.ms / Math.max(1, r.pages)), tot = Math.max(S.rows.length, r.rows.length), est = Math.round(Math.ceil(tot / 200) * perPage / 1000);
-    const filled = r.rows.length ? S.fields.filter((f) => !f.calc && r.rows.some((x) => x[f.id] !== null && x[f.id] !== undefined && x[f.id] !== '')).length : 0;
-    const res = { ...r0, ok: true, rows: r.rows.length, pages: r.pages, ms: r.ms, msPerPage: perPage, coCotCoDuLieu: filled + '/' + S.fields.filter((f) => !f.calc).length, uocTinh: tot ? `${tot} dòng ≈ ${est}s` : '' };
-    dlog('probe.direct', res);
-    say(`<p class="msg ok"><b>ĐỌC THẲNG ĐƯỢC.</b> ${r.rows.length.toLocaleString('vi-VN')} dòng / ${r.pages} trang trong ${(r.ms / 1000).toFixed(1)}s (≈${perPage} ms/trang 200 dòng). Cột có dữ liệu: ${res.coCotCoDuLieu}.${tot ? ` Ước tính ${tot.toLocaleString('vi-VN')} dòng mất khoảng ${est}s.` : ''}</p>`);
-  } catch (e) {
-    const m = String(e && e.message || e); dlog('probe.direct', { ...r0, ok: false, error: m });
-    say(`<p class="msg warn"><b>KHÔNG đọc thẳng được</b> ở chế độ này: ${esc(m)}. Vẫn cần cột gói.</p>`);
-  }
+  const res = { mode: S.dash, base: c.src.baseToken ? 'base khác' : 'base hiện tại', tests: {} }, T = res.tests, lines = [];
+  const show = (extra) => say(`<b>Đang so sánh các cách đọc thẳng bảng…</b>${extra ? ' ' + esc(extra) : ''}<br>${lines.join('<br>')}`);
+  const fmt = (ms) => (ms / 1000).toFixed(1) + 's';
+  const run = async (name, label, fn) => { show(label); const t0 = performance.now(); try { const r = await withTimeout(fn(), 90000); r.ms = Math.round(performance.now() - t0); T[name] = r; lines.push(`✓ ${label}: ${r.n.toLocaleString('vi-VN')} ${r.unit || 'dòng'} trong ${fmt(r.ms)}${r.note ? ' · ' + r.note : ''}`); } catch (e) { T[name] = { error: String(e && e.message || e) }; lines.push(`✗ ${label}: ${esc(T[name].error)}`); } };
+  let table; try { table = await directTable(c); } catch (e) { dlog('probe.direct', { ...res, ok: false, error: String(e && e.message || e) }); return say(`<p class="msg warn"><b>KHÔNG đọc thẳng được</b>: ${esc(e && e.message || e)}</p>`); }
+  let total = 0;
+  await run('ids', 'Danh sách mã bản ghi (getRecordIdList)', async () => { const ids = (await table.getRecordIdList()) || []; total = ids.length; return { n: ids.length }; });
+  await run('p200', 'Trang 200 dòng × 3 (getRecordsByPage)', async () => { const g = table.getRecordsByPage ? (o) => table.getRecordsByPage(o) : (o) => table.getRecords(o); const t1 = performance.now(); let tk, n = 0, pg = 0; for (; pg < 3; pg++) { const r = await g({ pageSize: 200, pageToken: tk }); n += ((r && r.records) || []).length; if (!r || !r.hasMore) { pg++; break; } tk = r.pageToken; } return { n, pages: pg, note: `≈${Math.round((performance.now() - t1) / Math.max(1, pg))} ms/trang` }; });
+  if (table.getRecords) await run('p5000', 'Trang lớn 5.000 dòng (getRecords)', async () => { const r = await table.getRecords({ pageSize: 5000 }); const n = ((r && r.records) || []).length; return { n, more: !!(r && r.hasMore), note: r && r.hasMore ? 'còn trang sau' : 'hết bảng' }; });
+  const flds = S.fields.filter((f) => !f.calc);
+  await run('cols', `Theo cột (getFieldValueList × ${flds.length} cột)`, async () => { let n = 0, ok = 0; for (const f of flds) { const fo = await table.getFieldById(f.id); if (!fo || !fo.getFieldValueList) throw new Error('SDK không có getFieldValueList'); const v = (await fo.getFieldValueList()) || []; n = Math.max(n, v.length); ok++; } return { n, note: ok + ' cột' }; });
+  // ước tính đọc hết bảng
+  const N = total || Math.max(S.rows.length, 1), est = [];
+  if (T.p200 && T.p200.n) est.push(['trang 200', Math.ceil(N / 200) * T.p200.ms / T.p200.pages]);
+  if (T.p5000 && T.p5000.n) est.push(['trang 5.000', T.p5000.n > 200 ? Math.ceil(N / Math.max(T.p5000.n, 1)) * T.p5000.ms : null]);
+  if (T.cols && T.cols.n) est.push(['theo cột', T.cols.n >= N ? T.cols.ms : null]);
+  res.total = N; res.estimate = Object.fromEntries(est.map(([k, v]) => [k, v === null ? 'không dùng được' : fmt(v)]));
+  dlog('probe.direct', res); lines.push(`<b>Ước tính đọc hết ${N.toLocaleString('vi-VN')} dòng:</b> ` + est.map(([k, v]) => `${k}: ${v === null ? 'không dùng được' : fmt(v)}`).join(' · '));
+  say(`<p class="msg ok" style="text-align:left">${lines.join('<br>')}</p><p class="hint">Bấm Sao chép rồi gửi kết quả này.</p>`);
   const pre = $('mBody') && $('mBody').querySelector('pre'); if (pre) pre.textContent = JSON.stringify({ ver: VER, dash: S.dash, rows: S.rows.length, log: diag }, null, 1);
 }
 function startLive(c) {
