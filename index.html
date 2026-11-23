@@ -122,7 +122,12 @@ body.sidehid .layout{grid-template-columns:minmax(0,1fr)}body.sidehid .side{disp
 .menu button{border:0;background:none;text-align:left;padding:7px 10px;border-radius:6px}.menu button:hover{background:#f2f3f5}.menu hr{border:0;border-top:1px solid var(--line);margin:3px}
 .modal{position:fixed;inset:0;background:#0007;display:none;align-items:center;justify-content:center;z-index:90;padding:14px}.modal.show{display:flex}
 .card{background:#fff;border-radius:12px;max-width:720px;width:100%;max-height:92vh;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
-.card h3{margin:0}.card pre{margin:0;background:var(--soft);border-radius:8px;padding:10px;font-size:11px;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow:auto;user-select:text}
+.card h3{margin:0}
+.rpt td[data-dd]{cursor:pointer}.rpt td[data-dd]:hover{text-decoration:underline;color:#1456f0}
+.gbar .gsep2{width:1px;height:16px;background:#c8ccd2;margin:0 4px}.gbar .pvchip b{color:#7a3db8}
+.ddw{max-height:60vh;overflow:auto;border:1px solid #c8ccd2}.ddt{border-collapse:collapse;width:100%;font-size:12px}.ddt th,.ddt td{border:1px solid #d5d8dc;padding:3px 6px;white-space:nowrap}.ddt th{position:sticky;top:0;background:#f2f3f5;font-weight:600}
+.xhd{display:flex;align-items:center;justify-content:space-between;gap:10px}.xhd h3,.xhd h4{flex:1;min-width:0}
+.xbtn{flex:none;width:26px;height:26px;padding:0;border:1px solid transparent;background:none;border-radius:4px;font-size:14px;line-height:1;color:#555;cursor:pointer}.xbtn:hover{background:#eceef1;border-color:#c8ccd2;color:#000}.xbtn:focus-visible{outline:2px solid var(--pri,#1456f0);outline-offset:1px}.card pre{margin:0;background:var(--soft);border-radius:8px;padding:10px;font-size:11px;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow:auto;user-select:text}
 .card textarea{min-height:180px;font:12px ui-monospace,Consolas,monospace}.card .acts{display:flex;justify-content:flex-end;gap:8px}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1f2329;color:#fff;padding:9px 14px;border-radius:8px;font-size:12.5px;z-index:95;display:none;max-width:90vw}.toast.show{display:block}
 .needfix{outline:2px solid #d13438!important;outline-offset:2px;border-radius:6px}
@@ -355,7 +360,7 @@ body.dashview .top{display:none}
       <label class="lbl">View (lọc sẵn của Lark)<select id="selView"></select></label>
       <div id="packBox" hidden style="display:flex;flex-direction:column;gap:6px">
         <label class="lbl">Cột gói dữ liệu<select id="selPack" title="Cột công thức gom các cột báo cáo dùng, để khối luôn lấy được dữ liệu mới"></select></label>
-        <div class="row"><button id="btnPack" title="Thử tự cập nhật; nếu Lark chặn sẽ hiện công thức để dán tay">Cập nhật cột gói</button><button id="btnPackTest" class="fit">Kiểm tra</button></div>
+        <div class="row"><button id="btnPack" title="Xem / sao chép công thức cột gói để dán vào bảng">Công thức cột gói</button><button id="btnPackTest" class="fit">Kiểm tra</button></div>
         <p class="hint" id="packHint"></p>
       </div>
     </div>
@@ -388,12 +393,12 @@ body.dashview .top{display:none}
 </main>
 </div>
 </div>
-<div class="modal" id="modal" role="dialog" aria-modal="true"><div class="card"><h3 id="mTitle"></h3><div id="mBody"></div><div class="acts" id="mActs"></div></div></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle"><div class="card"><div class="xhd"><h3 id="mTitle"></h3><button id="mClose" class="xbtn" type="button" title="Đóng (Esc)" aria-label="Đóng">✕</button></div><div id="mBody"></div><div class="acts" id="mActs"></div></div></div>
 <div class="toast" id="toast" role="status"></div>
 <div class="pop" id="pop" hidden></div>
 <div class="menu" id="menu" hidden></div>
 <div class="panel" id="gset" hidden role="dialog" aria-label="Thiết lập chung">
-  <h4>Thiết lập chung</h4>
+  <div class="xhd"><h4>Thiết lập chung</h4><button id="gsetX" class="xbtn" type="button" title="Đóng (Esc)" aria-label="Đóng">✕</button></div>
   <div class="grid2">
     <label class="lbl">Kiểu số<select id="lNf"><option value="en">1,234,567.89</option><option value="vi">1.234.567,89</option></select></label>
     <label class="lbl">Số lẻ mặc định<select id="lDp"><option value="">Tự động</option><option value="0">0</option><option value="2">2</option></select></label>
@@ -404,7 +409,6 @@ body.dashview .top{display:none}
   </div>
   <label class="chk"><input type="checkbox" id="lFit"> Giãn cột vừa khung khi xem / in</label>
   <label class="chk"><input type="checkbox" id="lShowF"> In điều kiện lọc dưới tiêu đề</label>
-  <div class="row"><span></span><button id="gsetClose" class="fit">Xong</button></div>
 </div>
 
 <script type="module">
@@ -417,7 +421,7 @@ body.dashview .top{display:none}
 const SDK_URL = 'https://esm.sh/@lark-base-open/js-sdk@1.0.2';
 const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
 const PACK_SEP = '‖', PACK_TAG = '§', PACK_NAME = 'Gói dữ liệu báo cáo';
-const BLOCK_MAX = 12000, VER = '1.10', VIEW_CAP = Infinity, CACHE_MS = 60000;
+const BLOCK_MAX = 12000, VER = '1.12', VIEW_CAP = Infinity, CACHE_MS = 60000;
 let SDK = null, bitable = null, dashboard = null, workspace = null, FieldType = null;
 const FT = (k, d) => (FieldType && FieldType[k] !== undefined ? FieldType[k] : d);
 
@@ -443,10 +447,11 @@ function boxMsg(t, k = '') { const el = $('boxMsg'); el.className = 'msg ' + k; 
 function openModal(title, html, acts) {
   $('mTitle').textContent = title; $('mBody').innerHTML = html; const a = $('mActs'); a.innerHTML = '';
   for (const [lbl, fn, cls] of acts || []) { const b = document.createElement('button'); b.textContent = lbl; if (cls) b.className = cls; b.onclick = fn; a.appendChild(b); }
-  const c = document.createElement('button'); c.id = 'mClose'; c.textContent = 'Đóng'; c.onclick = closeModal; a.appendChild(c);
+  a.hidden = !a.children.length; $('mClose').hidden = false;
   $('modal').classList.add('show');
 }
 function closeModal() { $('modal').classList.remove('show'); }
+$('mClose').onclick = () => closeModal();
 $('modal').addEventListener('click', (e) => { if (e.target === $('modal') && !S.saving) closeModal(); });
 async function copyText(t) { try { await navigator.clipboard.writeText(t); return true; } catch (e) { try { const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok; } catch (x) { return false; } } }
 function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
@@ -656,7 +661,9 @@ function fmtVal(c, v, lay) {
 }
 const srcRows = (rows) => (rows.length && rows[0]._src ? rows.flatMap((r) => r._src) : rows);
 function aggOf(c, rows) {
-  const vals = srcRows(rows).map((r) => r[c.f]);
+  let src = srcRows(rows); if (c._kf && c._pk !== undefined) src = src.filter((r) => c._kf(r).k === c._pk);
+  if (c._rows) return src.length;
+  const vals = src.map((r) => r[c.f]);
   if (c.agg === 'cnt') return vals.filter((v) => v !== null && v !== undefined && v !== '').length;
   if (c.agg === 'cntd') return new Set(vals.filter((v) => v !== null && v !== undefined && v !== '').map(String)).size;
   const nums = vals.map((v) => (typeof v === 'number' ? v : toNum(v))).filter((n) => n !== null);
@@ -827,6 +834,72 @@ function mergeSpans(rows, cols, lay) {
   return res;
 }
 
+/* ---------------- PIVOT: xoay một cột thành nhiều cột ngang ----------------
+   Hàng = các cột không tính tổng (+ nhóm), Giá trị = các cột có tính tổng, Cột ngang = lay.pv.f.
+   Tạo các cột "ảo" dùng chung định dạng với cột giá trị gốc → toàn bộ phần vẽ / Excel / PDF / In dùng lại được. */
+const pivotOn = (lay) => (lay && lay.pv && lay.pv.f && S.fIdx.has(lay.pv.f) ? lay.pv : null);
+let PVC = { sig: '', m: new WeakMap() };
+function pvKeyFn(pv, lay) {
+  const sig = pv.f + '|' + (pv.by || '') + '|' + (lay.df || ''); if (PVC.sig !== sig) PVC = { sig, m: new WeakMap() };
+  const m = PVC.m, g = { f: pv.f, by: pv.by || '' };
+  return (r) => { let k = m.get(r); if (!k) { k = grpKey(g, r, lay); m.set(r, k); } return k; };
+}
+function pivotize(lay, rows) {
+  const pv = pivotOn(lay); if (!pv) return { lay, n: 0 };
+  const kf = pvKeyFn(pv, lay), keys = new Map();
+  for (const r of rows) { const k = kf(r); if (!keys.has(k.k)) keys.set(k.k, k); }
+  const P = [...keys.values()].sort((a, b) => { const c = cmpVal(a.s, b.s); return pv.d ? -c : c; });
+  const valid = lay.cols.map((c, i) => [c, i]).filter(([c]) => S.fIdx.has(c.f) && c.f !== pv.f);
+  const dims = valid.filter(([c]) => !c.agg), vals0 = valid.filter(([c]) => c.agg);
+  const vals = vals0.length ? vals0 : [[Object.assign(clone(COLDEF), { f: pv.f, agg: 'cnt', _rows: true, h: 'Số dòng', w: 80, fmt: 'num', dp: 0 }), -1]];
+  const V = vals.length, vh = (c) => c.h || fName(c.f), out = dims.map(([c, i]) => ({ ...c, _ci: i }));
+  const mk = (p) => vals.map(([c, i]) => ({ ...c, _ci: i, _pv: true, _kf: kf, _pk: p ? p.k : undefined, mg: false, g: V > 1 ? (p ? p.t : 'Cộng') : vh(c), h: V > 1 ? vh(c) : (p ? p.t : 'Cộng') }));
+  for (const p of P) out.push(...mk(p));
+  if (pv.tot !== false) out.push(...mk(null));
+  return { lay: { ...lay, cols: out, mode: 'sum', pv: null, _pv: pv }, n: P.length, v: V };
+}
+// Ước tính số cột ngang trước khi chạy: cột ngang là cột ngày và có bộ lọc khoảng ngày trên chính cột đó
+function pivotEstimate(lay, fv) {
+  const pv = pivotOn(lay); if (!pv) return null; const f = S.fIdx.get(pv.f); if (!f || f.k !== 'date') return null;
+  const F = S.cfg.filters.find((x) => x.f === pv.f && x.kind === 'date'); const v = F && fv && fv[F.id]; if (!v || !v.from || !v.to) return null;
+  const a = new Date(dayStart(v.from)), b = new Date(dayStart(v.to)); if (b < a) return 0;
+  const mo = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth();
+  return pv.by === 'month' ? mo + 1 : pv.by === 'quarter' ? (b.getFullYear() * 4 + Math.floor(b.getMonth() / 3)) - (a.getFullYear() * 4 + Math.floor(a.getMonth() / 3)) + 1 : pv.by === 'year' ? b.getFullYear() - a.getFullYear() + 1 : Math.round((b - a) / 864e5) + 1;
+}
+function pivotItems(lay) {
+  const pv = lay.pv && lay.pv.f ? lay.pv : null, f = pv && S.fIdx.get(pv.f);
+  if (!pv) return [];
+  return [
+    ...(f && f.k === 'date' ? [{ t: 'Cột ngang theo', sub: Object.entries(BY_NAME).map(([v, t]) => ({ t: t[0].toUpperCase() + t.slice(1), ck: (pv.by || '') === v, fn: () => apply((l) => { l.pv.by = v; }, true) })) }] : []),
+    { t: 'Thứ tự cột ngang A → Z', ck: !pv.d, fn: () => apply((l) => { l.pv.d = false; }, true) },
+    { t: 'Thứ tự cột ngang Z → A', ck: !!pv.d, fn: () => apply((l) => { l.pv.d = true; }, true) },
+    { t: 'Hiện cột Cộng bên phải', ck: pv.tot !== false, fn: () => apply((l) => { l.pv.tot = l.pv.tot === false; }, true) },
+    '-', { t: 'Bỏ cột ngang (về báo cáo thường)', fn: () => apply((l) => { l.pv = null; }, true) },
+  ];
+}
+function setPivot(fid) { apply((l) => { const f = S.fIdx.get(fid); l.pv = { f: fid, by: f && f.k === 'date' ? 'month' : '', d: false, tot: true }; }, true); }
+
+/* ---------------- xem chi tiết số liệu (bấm vào ô số tổng hợp) ---------------- */
+S.dd = [];
+function ddAttr(c, rows, label) {
+  if (!c || !c.agg) return ''; S.dd.push({ c, rows, label }); return ` data-dd="${S.dd.length - 1}" title="Bấm để xem các dòng chi tiết"`;
+}
+function openDrill(i) {
+  const d = S.dd[i]; if (!d) return; const lay = L(), c = d.c;
+  let rows = srcRows(d.rows); if (c._kf && c._pk !== undefined) rows = rows.filter((r) => c._kf(r).k === c._pk);
+  const pv = pivotOn(lay), show = [];
+  const add = (f) => { if (f && S.fIdx.has(f) && !show.some((x) => x.f === f)) { const src = lay.cols.find((x) => x.f === f); show.push(src ? { ...src, mg: false } : { ...clone(COLDEF), f, h: fName(f) }); } };
+  lay.groups.forEach((g) => add(g.f)); if (pv) add(pv.f); lay.cols.forEach((x) => add(x.f));
+  const sorted = sortRows(rows, lay), MAX = 1000, part = sorted.slice(0, MAX);
+  const head = show.map((x) => `<th>${esc(x.h || fName(x.f))}</th>`).join('');
+  const body = part.map((r) => `<tr>${show.map((x) => `<td style="text-align:${AL[alOf(x, lay)]}">${esc(fmtVal(x, r[x.f], lay))}</td>`).join('')}</tr>`).join('');
+  const what = d.label || '';
+  const colName = c._pv ? (c.g && c.h ? `${c.g} · ${c.h}` : c.h || c.g) : (c.h || fName(c.f));
+  openModal('Chi tiết số liệu',
+    `<p class="hint" style="margin:0"><b>${esc(what || 'Toàn bộ')}</b> · cột <b>${esc(colName)}</b> = <b>${esc(fmtAgg(c, d.rows, lay))}</b> · ${rows.length.toLocaleString('vi-VN')} dòng${rows.length > MAX ? ` (hiện ${MAX.toLocaleString('vi-VN')} dòng đầu)` : ''}</p>`
+    + `<div class="ddw"><table class="ddt"><thead><tr>${head}</tr></thead><tbody>${body || `<tr><td colspan="${show.length}" style="text-align:center;color:#888">Không có dòng nào</td></tr>`}</tbody></table></div>`);
+}
+
 /* ---------------- dữ liệu minh họa cho khung thiết kế ---------------- */
 function demoRows(lay) {
   const out = [], gs = lay.groups.filter((g) => S.fIdx.has(g.f)), now = new Date();
@@ -837,6 +910,7 @@ function demoRows(lay) {
       const gi = gs.findIndex((g) => g.f === f.id), mc = lay.cols.find((c) => c.f === f.id && c.mg);
       if (f.k === 'num') r[f.id] = 1000 * (i + 1) * (i % 3 + 1) + 250;
       else if (f.k === 'date') r[f.id] = new Date(now.getFullYear(), now.getMonth(), Math.max(1, now.getDate() - (gi >= 0 || mc ? Math.floor(i / 3) : i))).getTime();
+      else if (lay.pv && lay.pv.f === f.id) r[f.id] = f.name + ' ' + (i % 3 + 1);
       else if (gi === 0) r[f.id] = f.name + ' ' + 'AB'[Math.floor(i / 4) % 2];
       else if (gi > 0) r[f.id] = f.name + ' ' + (Math.floor(i / 2) % 2 + 1);
       else if (mc) r[f.id] = 'abc ' + (Math.floor(i / 3) + 1);
@@ -854,6 +928,8 @@ function noW(lay, n) { const fs = +lay.fs || 13; return Math.max(42, Math.ceil(S
 const loadingText = () => `<span class="ld" aria-hidden="true"></span>Đang lấy dữ liệu từ Lark…<span id="ldCount">${S.loadCount ? ' ' + S.loadCount.toLocaleString('vi-VN') + ' dòng' : ''}</span>`;
 function reportHTML(lay, rows, mode, fv, availW) {
   const design = mode === 'design', print = mode === 'print' || mode === 'xls', allOpen = mode === 'xls' || design;
+  const PV = pivotize(lay, rows); lay = PV.lay; const drill = mode === 'view' && S.ran; if (mode === 'view') S.dd = [];
+  const cix = (k) => (cols[k]._ci === undefined ? ci[k] : cols[k]._ci); // chỉ số cột thật trong mẫu (cột ngang trỏ về cột giá trị gốc)
   const ci = lay.cols.map((c, i) => i).filter((i) => S.fIdx.has(lay.cols[i].f));
   const groups = (lay.groups || []).filter((g) => S.fIdx.has(g.f));
   const sty = lay.sty, fs = +lay.fs || 13, sel = (t) => (design && S.tgt === t ? ' tsel' : '');
@@ -878,14 +954,14 @@ function reportHTML(lay, rows, mode, fv, availW) {
   const hasG = cols.some((c) => c.g);
   let r1 = '', r2 = '';
   if (lay.showNo) r1 += `<th rowspan="${hasG ? 2 : 1}" data-tg="head" class="${fz(0).c}" style="${hs}${fz(0).s}">STT</th>`;
-  const th = (k, rs) => { const i = ci[k], c = lay.cols[i], z = fz(off + k); return `<th data-ci="${i}"${rs > 1 ? ` rowspan="${rs}"` : ''} class="${design && S.tgt === 'col' && inSel(i) ? 'sel' : ''}${z.c}"${mode === 'view' || design ? ' draggable="true"' : ''} style="${hs}${z.s}"><span class="hl">${esc(c.h || fName(c.f))}</span>${design ? `<i class="grip" data-ci="${i}"></i>` : ''}</th>`; };
+  const th = (k, rs) => { const i = cix(k), c = cols[k], z = fz(off + k); return `<th${i >= 0 ? ` data-ci="${i}"` : ''}${rs > 1 ? ` rowspan="${rs}"` : ''} class="${design && S.tgt === 'col' && inSel(i) ? 'sel' : ''}${z.c}"${mode === 'view' || design ? ' draggable="true"' : ''} style="${hs}${z.s}"><span class="hl">${esc(c.h || fName(c.f))}</span>${design ? `<i class="grip" data-ci="${i}"></i>` : ''}</th>`; };
   for (let k = 0; k < cols.length;) {
     const c = cols[k];
-    if (hasG && c.g) { let j = k; while (j + 1 < cols.length && cols[j + 1].g === c.g) j++; const z = off + j < nFz ? fz(off + k) : fz(1e9); r1 += `<th colspan="${j - k + 1}" data-tg="head" class="${z.c}" style="${hs}${z.s}"${design ? ` contenteditable="true" spellcheck="false" data-ed="grp:${ci[k]}:${j - k + 1}"` : ''}>${esc(c.g)}</th>`; for (let x = k; x <= j; x++) r2 += th(x, 1); k = j + 1; }
+    if (hasG && c.g) { let j = k; while (j + 1 < cols.length && cols[j + 1].g === c.g) j++; const z = off + j < nFz ? fz(off + k) : fz(1e9); r1 += `<th colspan="${j - k + 1}" data-tg="head" class="${z.c}${c._pv ? ' pvh' : ''}" style="${hs}${z.s}"${design && !c._pv ? ` contenteditable="true" spellcheck="false" data-ed="grp:${ci[k]}:${j - k + 1}"` : ''}>${esc(c.g)}</th>`; for (let x = k; x <= j; x++) r2 += th(x, 1); k = j + 1; }
     else { r1 += th(k, hasG ? 2 : 1); k++; }
   }
   // Khung thiết kế: hàng nhỏ phía trên ghi tên cột nguồn (như Bravo)
-  const srcRow = design ? `<tr class="hsrc">${lay.showNo ? '<th></th>' : ''}${cols.map((c, k) => { const f = S.fIdx.get(c.f); return `<th data-ci="${ci[k]}" title="Cột nguồn">${f && f.calc ? 'ƒx ' : ''}${esc(f ? f.name : '')}</th>`; }).join('')}</tr>` : '';
+  const srcRow = design ? `<tr class="hsrc">${lay.showNo ? '<th></th>' : ''}${cols.map((c, k) => { const f = S.fIdx.get(c.f); return `<th${cix(k) >= 0 ? ` data-ci="${cix(k)}"` : ''} title="Cột nguồn">${f && f.calc ? 'ƒx ' : ''}${esc(f ? f.name : '')}</th>`; }).join('')}</tr>` : '';
   h += srcRow + `<tr class="h1">${r1}</tr>` + (hasG ? `<tr class="h2">${r2}</tr>` : '') + `</thead><tbody>`;
   if (!design && mode === 'view' && (!S.ran || S.loading)) {
     h += `<tr class="more"><td colspan="${widths.length}">${S.loading ? loadingText() : 'Chọn điều kiện lọc ở khung bên trái rồi bấm <b>Báo cáo</b> để xem dữ liệu.'}</td></tr></tbody></table></div>`;
@@ -896,11 +972,12 @@ function reportHTML(lay, rows, mode, fv, availW) {
   const lead = span === 1 && aggK === 0 && !lay.showNo;
   const tail = (aggK < 0 ? [] : cols.slice(aggK)).slice(lead ? 1 : 0);
   const tail0 = off + (aggK < 0 ? cols.length : aggK) + (lead ? 1 : 0);
-  const tailCells = (rs, bgS, show) => tail.map((c, j) => { const z = fz(tail0 + j); return `<td class="${z.c}" style="${bgS}${z.s}text-align:${AL[alOf(c, lay)]}">${show && c.agg ? esc(fmtAgg(c, rs, lay)) : ''}</td>`; }).join('');
+  const tailCells = (rs, bgS, show, label) => tail.map((c, j) => { const z = fz(tail0 + j); return `<td class="${z.c}" style="${bgS}${z.s}text-align:${AL[alOf(c, lay)]}"${drill && show && c.agg ? ddAttr(c, rs, label) : ''}>${show && c.agg ? esc(fmtAgg(c, rs, lay)) : ''}</td>`; }).join('');
   const z0 = fz(0);
   const bodyS = css(sty.body, true), cap = design ? Infinity : (mode === 'view' ? S.cap : Infinity);
   let no = 0, shown = 0, capped = 0;
   const sorted = sortRows(rows, lay), hasMg = cols.some((c) => c.mg);
+  const dimCols = cols.filter((c) => !c.agg), dimLabel = (r) => dimCols.map((c) => fmtVal(c, r[c.f], lay)).filter(Boolean).join(' · ');
   const block = (list) => {
     let s = ''; if (shown >= cap) { capped += list.length; no += list.length; return ''; }
     if (shown + list.length > cap) { capped += list.length - (cap - shown); list = list.slice(0, cap - shown); }
@@ -911,8 +988,8 @@ function reportHTML(lay, rows, mode, fv, availW) {
       if (lay.showNo) s += `<td class="no${z0.c}" style="${bodyS}${z0.s}">${no}</td>`;
       cols.forEach((c, k) => {
         const sp = spans && spans.get(k); if (sp && sp[ri] === 0) return;
-        const i = ci[k], v = c.agg && r._src ? aggOf(c, [r]) : r[c.f], z = fz(off + k);
-        s += `<td data-ci="${i}"${sp && sp[ri] > 1 ? ` rowspan="${sp[ri]}"` : ''} class="${c.wrap ? 'w' : ''}${sp ? ' mg' : ''}${design && S.tgt === 'col' && inSel(i) ? ' sel' : ''}${z.c}" style="${bodyS}${z.s}text-align:${AL[alOf(c, lay)]};${css(c.s, true)}">${esc(c.agg && r._src ? fmtAgg(c, [r], lay) : fmtVal(c, v, lay))}</td>`;
+        const i = cix(k), v = c.agg && r._src ? aggOf(c, [r]) : r[c.f], z = fz(off + k);
+        s += `<td${i >= 0 ? ` data-ci="${i}"` : ''}${drill && c.agg && r._src ? ddAttr(c, [r], dimLabel(r)) : ''}${sp && sp[ri] > 1 ? ` rowspan="${sp[ri]}"` : ''} class="${c.wrap ? 'w' : ''}${sp ? ' mg' : ''}${design && S.tgt === 'col' && inSel(i) ? ' sel' : ''}${z.c}" style="${bodyS}${z.s}text-align:${AL[alOf(c, lay)]};${css(c.s, true)}">${esc(c.agg && r._src ? fmtAgg(c, [r], lay) : fmtVal(c, v, lay))}</td>`;
       });
       s += '</tr>';
     });
@@ -926,7 +1003,7 @@ function reportHTML(lay, rows, mode, fv, availW) {
       let t = n.t; if (lv === 0 && lay.gUp) t = t.toLocaleUpperCase('vi');
       const label = (lay.gNum ? num + (lv === 0 ? '. ' : ' ') : '') + t + (lay.gCnt ? ` (${srcRows(n.rows).length})` : '');
       const gs = lv === 0 ? sty.g0 : sty.g1, gS = css(gs, true);
-      s += `<tr class="gr g${lv}${sel(lv === 0 ? 'g0' : 'g1')}" data-k="${esc(n.key)}" data-tg="${lv === 0 ? 'g0' : 'g1'}"><td colspan="${span}" class="${z0.c}" style="${gS}${z0.s}padding-left:${5 + lv * 16}px">${print || design ? '' : `<span class="tg" aria-hidden="true">${open ? '−' : '+'}</span>`}${esc(label)}</td>${tailCells(n.rows, gS, lay.gSub)}</tr>`;
+      s += `<tr class="gr g${lv}${sel(lv === 0 ? 'g0' : 'g1')}" data-k="${esc(n.key)}" data-tg="${lv === 0 ? 'g0' : 'g1'}"><td colspan="${span}" class="${z0.c}" style="${gS}${z0.s}padding-left:${5 + lv * 16}px">${print || design ? '' : `<span class="tg" aria-hidden="true">${open ? '−' : '+'}</span>`}${esc(label)}</td>${tailCells(n.rows, gS, lay.gSub, label)}</tr>`;
       if (open) s += n.kids ? walk(n.kids, lv + 1, num) : block(n.rows);
       else no += n.rows.length;
     });
@@ -938,7 +1015,7 @@ function reportHTML(lay, rows, mode, fv, availW) {
   h += `</tbody>`;
   if (lay.total) {
     const tS = css(sty.total, true), lb = esc(lay.totalLabel || 'Tổng cộng:') + (aggK < 0 ? ` ${nRows.toLocaleString('vi-VN')} dòng` : '');
-    h += `<tbody class="tot"><tr class="tt${sel('total')}" data-tg="total"><td colspan="${span}" class="${z0.c}" style="${tS}${z0.s}text-align:${AL[sty.total.al || 'r']}"${design ? ` contenteditable="true" spellcheck="false" data-ed="total"` : ''}>${lb}</td>${tailCells(rows, tS, true)}</tr></tbody>`;
+    h += `<tbody class="tot"><tr class="tt${sel('total')}" data-tg="total"><td colspan="${span}" class="${z0.c}" style="${tS}${z0.s}text-align:${AL[sty.total.al || 'r']}"${design ? ` contenteditable="true" spellcheck="false" data-ed="total"` : ''}>${lb}</td>${tailCells(rows, tS, true, 'Tổng cộng')}</tr></tbody>`;
   }
   h += `</table>`;
   h += `<div class="rbot" style="width:${tw}px">${linesHTML(lay, 'bottom', rows, fv, design)}</div>`;
@@ -973,7 +1050,15 @@ const BY_NAME = { '': 'theo ngày', month: 'theo tháng', quarter: 'theo quý', 
 function gbarHTML(lay) {
   const gs = lay.groups.filter((g) => S.fIdx.has(g.f));
   const chips = gs.map((g, i) => { const f = S.fIdx.get(g.f); return `<span class="gchip" data-gl="${lay.groups.indexOf(g)}" title="Bấm để chỉnh cấp nhóm này"><b>${i + 1}</b>${esc(f.name)}${f.k === 'date' ? ' · ' + BY_NAME[g.by || ''] : ''}${g.d ? ' · Z→A' : ''}<button class="x" data-gx="${lay.groups.indexOf(g)}" aria-label="Bỏ nhóm ${esc(f.name)}">×</button></span>`; }).join('<span class="gsep">›</span>');
-  return `<div class="gbar" id="gbar"><span>Nhóm theo:</span>${chips || '<span class="gph">kéo tiêu đề cột vào đây</span>'}<button class="gadd" id="gAddBtn" title="Nhóm theo cột (kể cả cột không hiện trên báo cáo)">+ Nhóm</button><button class="gopt" id="gOptBtn">Tùy chọn ▾</button></div>`;
+  return `<div class="gbar" id="gbar"><span>Nhóm theo:</span>${chips || '<span class="gph">kéo tiêu đề cột vào đây</span>'}<button class="gadd" id="gAddBtn" title="Nhóm theo cột (kể cả cột không hiện trên báo cáo)">+ Nhóm</button>${pvChip(lay)}<button class="gopt" id="gOptBtn">Tùy chọn ▾</button></div>`;
+}
+function pvChip(lay) {
+  const pv = lay.pv && lay.pv.f && S.fIdx.get(lay.pv.f) ? lay.pv : null;
+  if (!pv) return `<span class="gsep2"></span><button class="gadd" id="pvAddBtn" title="Xoay một cột thành nhiều cột ngang (Pivot), ví dụ doanh thu theo từng tháng">+ Cột ngang</button>`;
+  const f = S.fIdx.get(pv.f), design = S.tab === 'design';
+  let n = null; if (!design && S.ran) n = pivotize(lay, filteredRows()).n; else n = pivotEstimate(lay, S.ran ? S.fvRun : S.fv);
+  const cnt = n === null ? '' : ` · ${n.toLocaleString('vi-VN')} cột${design || !S.ran ? ' (ước tính)' : ''}`;
+  return `<span class="gsep2"></span><span>Cột ngang:</span><span class="gchip pvchip" id="pvChip" title="Bấm để chỉnh cột ngang"><b>↔</b>${esc(f.name)}${f.k === 'date' ? ' · ' + BY_NAME[pv.by || ''] : ''}${esc(cnt)}<button class="x" data-pvx="1" aria-label="Bỏ cột ngang">×</button></span>`;
 }
 function fixSticky() {
   const z = S.tab === 'view' ? S.zoom : 1, top0 = -parseFloat(getComputedStyle($('stage')).paddingTop || '0') + ($('gbar') ? $('gbar').offsetHeight : 0);
@@ -1004,7 +1089,7 @@ function showMenu(x, y, items) {
 }
 document.addEventListener('mousedown', (e) => {
   if (!$('menu').hidden && !e.target.closest('#menu')) $('menu').hidden = true;
-  if (!$('pop').hidden && !e.target.closest('#pop') && !e.target.closest('.msb') && !e.target.closest('.dcal')) closePop();
+  if (!$('pop').hidden && !e.target.closest('#pop') && !e.target.closest('.msb') && !e.target.closest('.dcal')) { if (POP && POP.apply) POP.apply(); closePop(); } // bấm ra ngoài: giữ lựa chọn vừa tick
   if (!$('gset').hidden && !e.target.closest('#gset') && !e.target.closest('#rGset')) $('gset').hidden = true;
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('menu').hidden = true; $('gset').hidden = true; closePop(); if (!S.saving) closeModal(); } });
@@ -1072,6 +1157,12 @@ function tokenMenu(x, y, lineEl) {
 sheet.addEventListener('click', (e) => {
   if (e.target.id === 'btnMoreRows') { S.cap += VIEW_CAP; render(); return; }
   // thanh nhóm
+  const dd = e.target.closest('td[data-dd]'); if (dd && S.tab !== 'design' && !e.ctrlKey && !e.metaKey && !e.shiftKey) { /* Ctrl + bấm vẫn là mở / thu gọn nhóm */ openDrill(+dd.dataset.dd); return; }
+  if (e.target.closest('[data-pvx]')) { apply((l) => { l.pv = null; }, true); return; }
+  if (e.target.closest('#pvChip')) { const r = e.target.closest('#pvChip').getBoundingClientRect(); ctxMenu(r.left, r.bottom + 4, [...(S.tab === 'view' ? [{ h: 'Chỉ áp dụng cho lần xem này' }] : []), ...pivotItems(L())]); return; }
+  if (e.target.closest('#pvAddBtn')) { const r = e.target.closest('#pvAddBtn').getBoundingClientRect(), lay = L(), vis = new Set(lay.cols.map((c) => c.f)); const fs = S.fields.filter((f) => !f.calc || true);
+    const mk = (f) => ({ t: f.name + (f.k === 'date' ? ' (theo tháng)' : ''), fn: () => setPivot(f.id) });
+    ctxMenu(r.left, r.bottom + 4, [...(S.tab === 'view' ? [{ h: 'Chỉ áp dụng cho lần xem này' }] : []), { h: 'Xoay cột thành các cột ngang' }, ...fs.filter((f) => vis.has(f.id) && f.k !== 'num').map(mk), ...(fs.some((f) => !vis.has(f.id) && f.k !== 'num') ? ['-', { h: 'Cột khác' }, ...fs.filter((f) => !vis.has(f.id) && f.k !== 'num').map(mk)] : [])]); return; }
   const gx = e.target.closest('[data-gx]'); if (gx) { apply((l) => { l.groups.splice(+gx.dataset.gx, 1); }); return; }
   const gc = e.target.closest('.gchip'); if (gc) { const r = gc.getBoundingClientRect(); levelMenu(r.left, r.bottom + 4, +gc.dataset.gl); return; }
   if (e.target.closest('#gAddBtn')) { const r = e.target.closest('#gAddBtn').getBoundingClientRect(), lay = L(); const on = new Set(lay.groups.map((g) => g.f)), vis = new Set(lay.cols.map((c) => c.f));
@@ -1203,6 +1294,8 @@ function colMenu(e, ci) {
   const items = [];
   if (view) items.push({ h: 'Chỉ áp dụng cho lần xem này' });
   if (c) items.push({ t: gIdx(c.f) >= 0 ? `Bỏ nhóm theo "${c.h || fName(c.f)}"` : `Nhóm theo "${c.h || fName(c.f)}"`, fn: () => apply((l) => { const k = l.groups.findIndex((g) => g.f === c.f); if (k >= 0) l.groups.splice(k, 1); else l.groups.push({ f: c.f, d: false, by: colKind(c) === 'date' ? 'month' : '' }); }, true) });
+  if (c && !c.agg && colKind(c) !== 'num') items.push({ t: lay.pv && lay.pv.f === c.f ? 'Bỏ xoay cột này' : `Xoay "${c.h || fName(c.f)}" thành cột ngang (Pivot)`, fn: () => (lay.pv && lay.pv.f === c.f ? apply((l) => { l.pv = null; }, true) : setPivot(c.f)) });
+  if (lay.pv && lay.pv.f) items.push({ t: 'Cột ngang (Pivot)', sub: pivotItems(lay) });
   items.push({ t: 'Nhóm theo các cột', sub: [
     { t: 'Không phân nhóm dữ liệu', ck: !lay.groups.length, fn: () => apply((l) => { l.groups = []; }, true) }, '-',
     ...visCols.map((x) => { const k = gIdx(x.f); return { t: (k >= 0 ? `${k + 1}. ` : '') + (x.h || fName(x.f)), ck: k >= 0, fn: () => toggleGroupField(x.f) }; }),
@@ -1302,7 +1395,7 @@ const setP = (o, p, v) => { const ks = p.split('.'); const last = ks.pop(); ks.r
 function syncGset() { for (const [id, p, t] of GBIND) { const v = getP(L(), p); if (t === 'c') $(id).checked = !!v; else $(id).value = v ?? ''; } }
 for (const [id, p, t] of GBIND) $(id).addEventListener('change', () => { setP(L(), p, t === 'c' ? $(id).checked : t === 'n' ? +$(id).value || 13 : $(id).value); changed(); });
 $('rGset').onclick = (e) => { const p = $('gset'); if (!p.hidden) { p.hidden = true; return; } syncGset(); p.hidden = false; const r = e.currentTarget.getBoundingClientRect(); p.style.left = Math.max(8, Math.min(r.left, innerWidth - 330)) + 'px'; p.style.top = (r.bottom + 6) + 'px'; };
-$('gsetClose').onclick = () => { $('gset').hidden = true; };
+$('gsetX').onclick = () => { $('gset').hidden = true; };
 
 /* ---------------- thanh bên: thiết kế ---------------- */
 document.querySelectorAll('.sec h3').forEach((h) => h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed')));
@@ -1458,11 +1551,12 @@ async function openListPop(btn, id) {
   if (!S.rows.length && !S.loading) { btn.textContent = 'Đang tải danh sách…'; await ensureData(false).catch((e) => showErr(e)); renderViewFilters(); btn = $('fvBody').querySelector(`[data-id="${id}"] .msb`); if (!btn) return; }
   const vals = distinctVals(F.f), v = (S.fv[id] = S.fv[id] || {}), sel = new Set(v.vals || []);
   const p = $('pop'); POP = { id };
-  p.innerHTML = `<input type="search" placeholder="Tìm…" id="popQ" aria-label="Tìm giá trị"><div class="pa"><button data-a="all">Chọn hết</button><button data-a="none">Bỏ chọn</button></div><div class="pl" id="popL">${vals.map(([k, n]) => `<label data-s="${esc(fold(k))}"><input type="checkbox" value="${esc(k)}"${sel.has(k) ? ' checked' : ''}><span>${esc(k || '(Trống)')}</span><small>${n}</small></label>`).join('') || '<p class="hint" style="padding:8px">Chưa có dữ liệu.</p>'}</div><div class="pa"><button class="primary" data-a="ok">Áp dụng</button></div>`;
+  p.innerHTML = `<div class="xhd"><b style="flex:1;font-size:12.5px">${esc(F.label || fName(F.f))}</b><button class="xbtn" type="button" data-a="x" title="Đóng, bỏ thay đổi (Esc)" aria-label="Đóng, bỏ thay đổi">✕</button></div><input type="search" placeholder="Tìm…" id="popQ" aria-label="Tìm giá trị"><div class="pa"><button data-a="all">Chọn hết</button><button data-a="none">Bỏ chọn</button></div><div class="pl" id="popL">${vals.map(([k, n]) => `<label data-s="${esc(fold(k))}"><input type="checkbox" value="${esc(k)}"${sel.has(k) ? ' checked' : ''}><span>${esc(k || '(Trống)')}</span><small>${n}</small></label>`).join('') || '<p class="hint" style="padding:8px">Chưa có dữ liệu.</p>'}</div><div class="pa"><button class="primary" data-a="ok">Áp dụng</button></div>`;
   p.hidden = false; const r = btn.getBoundingClientRect(); p.style.left = Math.min(r.left, innerWidth - 280) + 'px'; p.style.top = Math.max(8, Math.min(r.bottom + 4, innerHeight - p.offsetHeight - 8)) + 'px';
   $('popQ').focus();
   $('popQ').oninput = () => { const q = fold($('popQ').value); p.querySelectorAll('#popL label').forEach((l) => { l.hidden = q && !l.dataset.s.includes(q); }); };
-  p.onclick = (e) => { const a = e.target.dataset.a; if (!a) return; const boxes = [...p.querySelectorAll('#popL label:not([hidden]) input')]; if (a === 'all') boxes.forEach((x) => (x.checked = true)); if (a === 'none') boxes.forEach((x) => (x.checked = false)); if (a === 'ok') { const all = [...p.querySelectorAll('#popL input')], on = all.filter((x) => x.checked).map((x) => x.value); v.vals = on.length === all.length ? [] : on; closePop(); renderViewFilters(); markPend(); } };
+  POP.apply = () => { const all = [...p.querySelectorAll('#popL input')]; if (!all.length) return; const on = all.filter((x) => x.checked).map((x) => x.value), nv = on.length === all.length ? [] : on; const changed = JSON.stringify(nv) !== JSON.stringify(v.vals || []); v.vals = nv; if (changed) { renderViewFilters(); markPend(); } };
+  p.onclick = (e) => { const a = e.target.closest('[data-a]') && e.target.closest('[data-a]').dataset.a; if (!a) return; const boxes = [...p.querySelectorAll('#popL label:not([hidden]) input')]; if (a === 'all') boxes.forEach((x) => (x.checked = true)); if (a === 'none') boxes.forEach((x) => (x.checked = false)); if (a === 'x') closePop(); if (a === 'ok') { POP.apply(); closePop(); } };
 }
 function closePop() { if ($('pop').hidden) return; $('pop').hidden = true; $('pop').classList.remove('cal'); POP = null; }
 // Bấm Báo cáo: đọc dữ liệu (dùng lại bản vừa đọc trong 60 giây), áp điều kiện lọc rồi vẽ
@@ -1570,7 +1664,7 @@ $('btnSide').onclick = () => { const h = document.body.classList.toggle('sidehid
 // Khổ A4: bảng hẹp in dọc, bảng rộng tự in ngang (và thu nhỏ nếu vẫn chưa vừa)
 const PAGE_PX = { P: 718, L: 1046 };
 const autoOrient = (tw) => (tw > PAGE_PX.P + 40 ? 'L' : 'P');
-function naturalWidth(lay) { return (lay.showNo ? noW(lay) : 0) + lay.cols.filter((c) => S.fIdx.has(c.f)).reduce((a, c) => a + Math.max(30, +c.w || 120), 0); }
+function naturalWidth(lay) { if (pivotOn(lay)) lay = pivotize(lay, S.ran ? filteredRows() : []).lay; return (lay.showNo ? noW(lay) : 0) + lay.cols.filter((c) => S.fIdx.has(c.f)).reduce((a, c) => a + Math.max(30, +c.w || 120), 0); }
 function doPrint() {
   const lay = L(), o = autoOrient(naturalWidth(lay)), pw = PAGE_PX[o];
   $('printRoot').innerHTML = reportHTML(lay, filteredRows(), 'print', S.fvRun, pw - 40);
@@ -1649,8 +1743,9 @@ function download(blob, name) { const a = document.createElement('a'); a.href = 
 const hex = (c) => String(c || '#000000').replace('#', '').toUpperCase();
 function xFont(base, s) { const f = { ...base }; if (s) { if (s.b === true) f.bold = true; if (s.b === false) f.bold = false; if (s.i === true) f.italic = true; if (s.u) f.underline = true; if (s.c) f.color = { rgb: hex(s.c) }; if (s.fs) f.sz = Math.round(s.fs * 0.75); } return f; }
 async function exportXlsx() {
-  const lay = L(); let rows = filteredRows();
+  let lay = L(), rows = filteredRows();
   let X; try { toast('Đang tạo file Excel…'); X = await withTimeout(loadXlsx(), 15000); } catch (e) { dlog('xlsx.lib', String(e.message)); return exportXlsHtml(); }
+  const PV = pivotize(lay, rows); const lay0 = lay; lay = PV.lay;
   if (lay.mode === 'sum') rows = summarize(rows, lay);
   const cols = lay.cols.filter((c) => S.fIdx.has(c.f)), groups = lay.groups.filter((g) => S.fIdx.has(g.f)), sty = lay.sty;
   const nC = cols.length + (lay.showNo ? 1 : 0), off = lay.showNo ? 1 : 0;
@@ -1831,7 +1926,7 @@ async function currentRange() {
 }
 function packNeeded() {
   const ids = new Set();
-  for (const l of S.cfg.layouts) { l.cols.forEach((c) => ids.add(c.f)); l.groups.forEach((g) => ids.add(g.f)); l.sort.forEach((s) => ids.add(s.f)); (l.notes || []).forEach((n) => n.t === 'field' && ids.add(n.f)); }
+  for (const l of S.cfg.layouts) { if (l.pv && l.pv.f) ids.add(l.pv.f); l.cols.forEach((c) => ids.add(c.f)); l.groups.forEach((g) => ids.add(g.f)); l.sort.forEach((s) => ids.add(s.f)); (l.notes || []).forEach((n) => n.t === 'field' && ids.add(n.f)); }
   S.cfg.filters.forEach((F) => ids.add(F.f));
   calcRefs().forEach((id) => ids.add(id));
   for (const l of S.cfg.layouts) lineFieldIds([...(l.top || []), ...(l.bottom || [])]).forEach((id) => ids.add(id));
@@ -1868,7 +1963,7 @@ function unpackRows(data, cols) {
 }
 function fillPackSelect() {
   if (!isEdit()) return; const el = $('selPack'), forms = S.metas.filter((m) => m.type === FT('Formula', 20));
-  fillSelect(el, forms, '— Chưa có (bấm Tạo / cập nhật cột gói) —');
+  fillSelect(el, forms, '— Chưa có —');
   const hit = forms.find((m) => m.id === S.cfg.src.packId) || forms.find((m) => m.name === PACK_NAME);
   el.value = hit ? hit.id : ''; S.cfg.src.packId = el.value; packHint();
 }
@@ -1876,9 +1971,9 @@ $('selPack').onchange = () => { S.cfg.src.packId = $('selPack').value; S.cfg.src
 function packStale() { const sig = new Set(S.cfg.src.packSig || []); return packNeeded().map((f) => f.id).filter((id) => !sig.has(id)); }
 function packHint() {
   if (!isEdit()) return; const el = $('packHint');
-  if (!S.cfg.src.packId) { el.textContent = 'Chưa có cột gói — Lưu khối sẽ thử tự tạo, nếu không được sẽ hướng dẫn dán công thức.'; el.style.color = 'var(--muted)'; return; }
+  if (!S.cfg.src.packId) { el.textContent = 'Chưa có cột gói — Lưu khối sẽ hiện công thức để dán vào bảng.'; el.style.color = 'var(--muted)'; return; }
   const st = packStale();
-  if (st.length) { el.style.color = 'var(--muted)'; el.textContent = `Cột gói thiếu ${st.length} cột — bấm Lưu khối để cập nhật.`; el.title = st.map(fName).join(', '); }
+  if (st.length) { el.style.color = 'var(--muted)'; el.textContent = `Cột gói thiếu ${st.length} cột — bấm Lưu khối để lấy công thức mới.`; el.title = st.map(fName).join(', '); }
   else { el.textContent = `✓ Cột gói đủ ${packNeeded().length} cột.`; el.style.color = 'var(--ok)'; }
 }
 // Tạo / cập nhật cột gói (không hiện hộp thoại) — Lưu khối gọi hàm này tự động
@@ -1889,46 +1984,28 @@ async function packIdsNow(fid) {
     for (const row of (pv || []).slice(1, 400)) { const cell = row && row[0]; const raw = cell && (cell.text || cell.value); if (raw) for (const m of String(raw).matchAll(/§([A-Za-z0-9_]+):/g)) ids.add(m[1]); } } catch (e) { dlog('pack.ids.error', String(e && e.message || e)); }
   return ids;
 }
-async function ensurePack() {
-  let cols = packNeeded(), formula = packFormula(cols); let done = false, err = '', fid = '';
-  if (!S.table) return { done, err: 'chưa chọn bảng', cols, formula }; if (!cols.length) return { done, err: 'báo cáo chưa dùng cột nào', cols, formula };
-  try {
-    fid = $('selPack').value || S.cfg.src.packId || (S.metas.find((m) => m.name === PACK_NAME) || {}).id;
-    if (fid) { // giữ lại cột mà báo cáo khác trên cùng bảng đang dùng
-      const old = await packIdsNow(fid), need = new Set(cols.map((c) => c.id)), keep = [...old].filter((id) => !need.has(id) && S.fIdx.has(id) && !S.fIdx.get(id).calc).map((id) => S.fIdx.get(id));
-      if (keep.length) { cols = cols.concat(keep); formula = packFormula(cols); dlog('pack.keep', keep.map((f) => f.name)); }
-    }
-    if (!fid) { const r = await withTimeout(S.table.addField({ type: FT('Formula', 20), name: PACK_NAME }), 15000); fid = typeof r === 'string' ? r : (r && (r.fieldId || r.id)); }
-    const f = await withTimeout(S.table.getFieldById(fid), 8000);
-    if (!f || !f.setFormula) throw new Error('SDK không hỗ trợ đặt công thức tự động');
-    await withTimeout(f.setFormula(formula), 15000);
-    S.metas = (await withTimeout(S.table.getFieldMetaList(), 15000)) || S.metas;
-    S.cfg.src.packId = fid; S.cfg.src.packSig = cols.map((c) => c.id); fillPackSelect(); done = true;
-  } catch (e) { err = String(e && e.message || e); dlog('pack.create.error', err); if (fid && !S.cfg.src.packId) { try { S.metas = (await withTimeout(S.table.getFieldMetaList(), 15000)) || S.metas; } catch (x) {} S.cfg.src.packId = fid; fillPackSelect(); } } // cột đã tạo nhưng chưa đặt được công thức → dán vào chính cột đó
-  let check = null; if (done) { await sleep(1500); check = await previewPack(true); if (!(check && check.ok)) { await sleep(2500); check = await previewPack(true); } } // công thức mới cần vài giây để Lark tính
-  return { done, err, cols, formula, check };
+// Công thức cần dán: cột báo cáo đang dùng + cột mà báo cáo khác trên cùng bảng đã có trong cột gói
+async function packPlan() {
+  let cols = packNeeded(); const sel = S.cfg.src.packId; let have = new Set();
+  if (sel) { have = await packIdsNow(sel).catch(() => new Set()); const need = new Set(cols.map((c) => c.id)); const keep = [...have].filter((id) => !need.has(id) && S.fIdx.has(id) && !S.fIdx.get(id).calc).map((id) => S.fIdx.get(id)); if (keep.length) cols = cols.concat(keep); }
+  return { cols, formula: packFormula(cols), missing: packNeeded().filter((f) => !have.has(f.id)), sel };
 }
 async function makePack() {
   if (!S.table) return toast('Chưa chọn bảng.'); if (!packNeeded().length) return toast('Báo cáo chưa dùng cột nào.');
-  toast('Đang thử tự cập nhật cột gói…', 8000);
-  const r = await ensurePack();
-  if (r.done) return openModal('Cột gói dữ liệu cho khối', `<p class="msg ${r.check && r.check.ok ? 'ok' : 'warn'}">Đã tự cập nhật cột gói. ${esc(r.check ? r.check.msg : '')}</p>`);
-  return showManualPack(r, false);
+  return showManualPack(await packPlan(), false);
 }
-// Lark không cho extension sửa công thức (thường gặp khi Sửa khối) → hướng dẫn dán tay, kèm công thức và danh sách cột thiếu
-async function showManualPack(r, fromSave) {
-  const sel = S.cfg.src.packId, selName = sel ? fName(sel) : '';
-  let have = new Set(); if (sel) have = await packIdsNow(sel).catch(() => new Set());
-  const missing = packNeeded().filter((f) => !have.has(f.id));
-  openModal('Cần dán công thức cột gói',
-    `<p class="msg warn">Lark không cho extension tự sửa công thức cột${r && r.err ? ` (${esc(r.err)})` : ''}. Hãy dán công thức thủ công — mỗi bảng chỉ cần làm lại khi báo cáo dùng thêm cột mới.</p>`
-    + `<ol class="hint" style="margin:6px 0 8px 18px;padding:0">`
-    + (sel ? `<li>Trong bảng <b>${esc(S.tableMeta.name)}</b>, mở cài đặt cột <b>${esc(selName)}</b> → thay toàn bộ công thức bằng công thức dưới đây.</li>`
-           : `<li>Trong bảng <b>${esc(S.tableMeta.name)}</b>, thêm cột kiểu <b>Công thức</b> (đặt tên tùy ý, ví dụ "${esc(PACK_NAME)}") và dán công thức dưới đây.</li>`)
-    + `<li>Quay lại đây bấm <b>Đã dán xong — Lưu khối</b>. Extension tự tìm cột vừa dán, kiểm tra đủ cột rồi lưu.</li></ol>`
-    + (missing.length ? `<p class="hint">Cột gói đang thiếu <b>${missing.length}</b> cột: ${missing.map((f) => esc(f.name)).join(', ')}</p>` : '')
+// Khung hướng dẫn dán công thức cột gói (Lark không cho extension tự sửa công thức)
+function showManualPack(r, again) {
+  const selName = r.sel ? fName(r.sel) : '';
+  openModal('Công thức cột gói',
+    (again ? `<p class="msg warn">Chưa thấy cột gói nào đủ cột báo cáo cần. Kiểm tra lại công thức đã dán (dán đủ, không sót ký tự) rồi bấm <b>Kiểm tra và lưu khối</b>.</p>` : '')
+    + `<ol class="hint" style="margin:0 0 4px 18px;padding:0">`
+    + (r.sel ? `<li>Trong bảng <b>${esc(S.tableMeta.name)}</b>, mở cài đặt cột <b>${esc(selName)}</b> và thay toàn bộ công thức bằng công thức dưới đây.</li>`
+             : `<li>Trong bảng <b>${esc(S.tableMeta.name)}</b>, thêm một cột kiểu <b>Công thức</b> (tên tùy ý) và dán công thức dưới đây.</li>`)
+    + `<li>Bấm <b>Kiểm tra và lưu khối</b>: extension tự tìm cột vừa dán, kiểm tra đủ cột rồi lưu.</li></ol>`
+    + (r.missing.length ? `<p class="hint">Cột gói đang thiếu <b>${r.missing.length}</b> cột: ${r.missing.map((f) => esc(f.name)).join(', ')}</p>` : '')
     + `<p class="hint">Công thức gói ${r.cols.length} cột:</p><pre>${esc(r.formula)}</pre>`,
-    [['Sao chép công thức', async () => { toast((await copyText(r.formula)) ? 'Đã chép công thức.' : 'Không chép được, hãy bôi đen và Ctrl+C.'); }, 'primary'], ['Đã dán xong — Lưu khối', () => { closeModal(); saveDash(); }]]);
+    [['Sao chép công thức', async () => { toast((await copyText(r.formula)) ? 'Đã chép công thức.' : 'Không chép được, hãy bôi đen và Ctrl+C.'); }], ['Kiểm tra và lưu khối', () => { closeModal(); saveDash(true); }, 'primary']]);
 }
 // Tìm cột gói người dùng vừa dán: cột đang chọn trước, rồi tới các cột công thức khác có dữ liệu dạng gói
 async function findPack() {
@@ -1967,7 +2044,7 @@ async function savePackVerified(cfg, cond, packId, step) {
   return 'nogroup';
 }
 function flagFix(el, msg) { if (!el) return; const sec = el.closest('.sec'); if (sec) sec.classList.remove('collapsed'); el.classList.add('needfix'); el.scrollIntoView({ block: 'center' }); toast(msg, 8000); setTimeout(() => el.classList.remove('needfix'), 6000); }
-async function saveDash() {
+async function saveDash(again) {
   if (S.tab !== 'design') setTab('design');
   if (!S.cfg.src.tableId) return flagFix($('selTable'), 'Chọn bảng dữ liệu trước khi Lưu khối.');
   if (!L().cols.length) return flagFix($('fList'), 'Báo cáo chưa có cột nào.');
@@ -1978,11 +2055,7 @@ async function saveDash() {
   let packOk = !!S.cfg.src.packId && !packStale().length;
   if (S.cfg.src.packId && !packOk) { step('Kiểm tra cột gói…'); const ck = await previewPack(true).catch(() => null); packOk = !!(ck && ck.ok); }
   if (!packOk) { step('Tìm cột gói đã có trong bảng…'); packOk = !!(await findPack()); }
-  if (!packOk) {
-    step('Thử tự cập nhật cột gói (' + packNeeded().length + ' cột)…'); const r = await ensurePack().catch((e) => ({ done: false, err: String(e && e.message || e), cols: packNeeded(), formula: packFormula(packNeeded()) }));
-    packOk = !!(r.done && r.check && r.check.ok); dlog('save.autopack', { done: r.done, ok: packOk, err: r.err || '' });
-    if (!packOk) { btn.disabled = false; S.saving = false; $('mClose').hidden = false; closeModal(); if (!r.done) return showManualPack(r, true); return flagFix($('btnPack'), 'Đã cập nhật cột gói nhưng Lark chưa tính xong — đợi vài giây rồi bấm Lưu khối lại.'); }
-  }
+  if (!packOk) { step('Chuẩn bị công thức cột gói…'); const r = await packPlan(); btn.disabled = false; S.saving = false; $('mClose').hidden = false; dlog('save.needpack', { missing: r.missing.length, again: !!again }); return showManualPack(r, !!again); }
   const packId = S.cfg.src.packId;
   try {
     await baseTokenNow(); const ts = Date.now();
@@ -2008,7 +2081,7 @@ async function saveDash() {
   }
 }
 $('vDl').onclick = (e) => { if (!S.ran) return toast('Bấm Báo cáo trước khi tải về.'); const r = e.currentTarget.getBoundingClientRect(); showMenu(r.right - 220, r.bottom + 4, [['Excel (.xlsx)', doXlsx], ['PDF — khổ A4 tự chọn dọc / ngang', doPdf]]); };
-$('btnDashSave').onclick = () => saveDash();
+$('btnDashSave').onclick = () => saveDash(false);
 const rows0 = (d) => (Array.isArray(d) ? d.length - 1 : 0);
 const ungrouped = (d) => !Array.isArray(d) || d.length < 2 || !d[0] || d[0].length < 2;
 function refreshLive(c, quiet) {
