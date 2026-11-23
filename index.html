@@ -337,7 +337,6 @@ body.dashview .top{display:none}
     <button id="rX" aria-label="Bỏ cột" title="Bỏ cột khỏi báo cáo" class="danger"><svg class="i"><use href="#i-x"/></svg></button>
   </div></div>
   <div class="rg"><div class="rr">
-    <select id="rOrient" aria-label="Khổ giấy"><option value="L">A4 ngang</option><option value="P">A4 dọc</option></select>
     <label class="cbtn" title="Màu đường kẻ" style="font-size:11px">Kẻ<i id="rGridsw"></i><input type="color" id="rGrid" aria-label="Màu đường kẻ"></label>
     <button id="rZebra" aria-pressed="false" title="Tô xen kẽ dòng chi tiết">Xen kẽ</button>
     <button id="rGset" class="ib" title="Kiểu số, ngày, ký tên, giãn cột…"><svg class="i"><use href="#i-gear"/></svg>Thiết lập</button>
@@ -380,6 +379,7 @@ body.dashview .top{display:none}
     <span style="flex:1"></span>
     <select id="vZoom" aria-label="Thu phóng"><option value="0.75">75%</option><option value="0.9">90%</option><option value="1" selected>100%</option><option value="1.1">110%</option><option value="1.25">125%</option></select>
     <button id="vPrint" class="ib"><svg class="i"><use href="#i-print"/></svg>In</button>
+    <button id="vPdf" class="ib" title="Tải về PDF (tự chọn khổ dọc / ngang)"><svg class="i"><use href="#i-dl"/></svg>PDF</button>
     <button id="vXlsx" class="ib primary"><svg class="i"><use href="#i-dl"/></svg>Excel</button>
   </div>
   <div class="stage" id="stage"><div id="sheet"><div class="empty">Đang tải…</div></div></div>
@@ -416,7 +416,7 @@ body.dashview .top{display:none}
 const SDK_URL = 'https://esm.sh/@lark-base-open/js-sdk@1.0.2';
 const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
 const PACK_SEP = '‖', PACK_TAG = '§', PACK_NAME = 'Gói dữ liệu báo cáo';
-const BLOCK_MAX = 12000, VER = '1.5', VIEW_CAP = 2000, CACHE_MS = 60000;
+const BLOCK_MAX = 12000, VER = '1.6', VIEW_CAP = Infinity, CACHE_MS = 60000;
 let SDK = null, bitable = null, dashboard = null, workspace = null, FieldType = null;
 const FT = (k, d) => (FieldType && FieldType[k] !== undefined ? FieldType[k] : d);
 
@@ -721,7 +721,9 @@ function filteredRows() {
 }
 const PADS = { S: 1, M: 3, L: 6 };
 /* ---- Dòng tự do trên / dưới báo cáo: chữ + biến {Khoảng ngày}, {Từ ngày}, {Đến ngày}, {Hôm nay}, {Số dòng}, [Tên cột] ---- */
-const TOKEN_RE = /\{(Khoảng ngày|Từ ngày|Đến ngày|Hôm nay|Số dòng)\}|\[([^\]]+)\]/g;
+const TOKEN_RE = /\{(Khoảng ngày|Từ ngày|Đến ngày|Hôm nay|Số dòng|Ngày tháng năm|Ngày tháng năm trống|Đến ngày bằng chữ)\}|\[([^\]]+)\]/g;
+const dayWords = (ms) => { const d = new Date(ms); return `ngày ${pad2(d.getDate())} tháng ${pad2(d.getMonth() + 1)} năm ${d.getFullYear()}`; };
+const capFirst = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 function fieldByRef(ref) { if (ref.startsWith('#')) return S.fIdx.get(ref.slice(1)) || null; const k = fold(ref); return S.fields.find((f) => fold(f.name) === k) || null; }
 function dateFilterRange(fv) {
   const F = S.cfg.filters.find((x) => DATE_KINDS.has(x.kind)); if (!F) return null; const v = fv[F.id] || {};
@@ -738,10 +740,12 @@ function lineText(text, rows, fv, lay) {
     if (v === 'Khoảng ngày' && r) x = r.kind === 'day' ? `Ngày ${d(r.from)}` : r.kind === 'asof' ? `Đến ngày ${d(r.to)}` : r.from && r.to ? `Từ ngày ${d(r.from)} đến ngày ${d(r.to)}` : r.from ? `Từ ngày ${d(r.from)}` : `Đến ngày ${d(r.to)}`;
     else if (v === 'Từ ngày' && r) x = d(r.from); else if (v === 'Đến ngày' && r) x = d(r.to);
     else if (v === 'Hôm nay') x = fmtDate(Date.now(), lay); else if (v === 'Số dòng') x = srcRows(rows).length.toLocaleString('vi-VN');
+    else if (v === 'Ngày tháng năm') x = dayWords(Date.now()); else if (v === 'Ngày tháng năm trống') x = 'ngày ..... tháng ..... năm .......';
+    else if (v === 'Đến ngày bằng chữ' && r && r.to) x = dayWords(dayStart(r.to));
     else if (ref) { const f = fieldByRef(ref); x = f ? colValues(f, rows) : ''; }
     if (x) filled++; return x;
   });
-  return toks && !filled ? null : out;
+  return toks && !filled ? null : out.replace(/^ngày /, 'Ngày ');
 }
 // Trong khung thiết kế hiện tên cột thay cho mã [#id]
 const lineEditText = (t) => String(t || '').replace(/\[#([^\]]+)\]/g, (m, id) => (S.fIdx.has(id) ? '[' + fName(id) + ']' : m));
@@ -938,7 +942,7 @@ function reportHTML(lay, rows, mode, fv, availW) {
   // Phần ký tên: tùy chọn, mọi chữ sửa được ngay trên mẫu; ô để trống thì không in
   const F = lay.foot;
   if (F.show) {
-    const slot = (k, ks, date) => (design || F[k] || F[ks] || date ? `<div>${date ? `<span class="rd"${ed('foot.dt')}>${esc(F.dt ?? 'Ngày ..... tháng ..... năm .......')}</span>` : ''}<b${ed('foot.' + k)}>${esc(F[k])}</b><i${ed('foot.' + ks)}>${esc(F[ks])}</i></div>` : '<div></div>');
+    const slot = (k, ks, date) => (design || F[k] || F[ks] || date ? `<div>${date ? `<span class="rd"${ed('foot.dt')}>${esc(design ? (F.dt ?? 'Ngày ..... tháng ..... năm .......') : (lineText(F.dt ?? 'Ngày ..... tháng ..... năm .......', rows, fv, lay) ?? ''))}</span>` : ''}<b${ed('foot.' + k)}>${esc(F[k])}</b><i${ed('foot.' + ks)}>${esc(F[ks])}</i></div>` : '<div></div>');
     const bar = design ? `<span class="fbar" contenteditable="false"><button data-fa="date" aria-pressed="${F.date ? 'true' : 'false'}" title="Bật / tắt dòng ngày tháng trên chữ ký bên phải">Dòng ngày</button><button data-fa="del" title="Xóa phần ký tên">${svg('x')} Xóa phần ký tên</button></span>` : '';
     h += `<div class="rfoot${sel('foot')}" data-tg="foot" style="width:${tw}px;${css(sty.foot)}">${bar}${slot('l', 'ls')}${slot('c', 'cs')}${slot('r', 'rs', F.date)}</div>`;
   } else if (design) h += `<button class="laddbtn" data-fa="add" style="margin-top:10px">+ Thêm phần ký tên</button>`;
@@ -1054,7 +1058,11 @@ function tokenMenu(x, y, lineEl) {
     { h: 'Theo bộ lọc ngày' },
     { t: 'Khoảng ngày (Từ ngày … đến ngày …)', fn: () => insertToken(lineEl, '{Khoảng ngày}') },
     { t: 'Từ ngày', fn: () => insertToken(lineEl, '{Từ ngày}') }, { t: 'Đến ngày', fn: () => insertToken(lineEl, '{Đến ngày}') },
-    { t: 'Hôm nay', fn: () => insertToken(lineEl, '{Hôm nay}') }, { t: 'Số dòng', fn: () => insertToken(lineEl, '{Số dòng}') },
+    { t: 'Hôm nay (dd/mm/yyyy)', fn: () => insertToken(lineEl, '{Hôm nay}') }, { t: 'Số dòng', fn: () => insertToken(lineEl, '{Số dòng}') },
+    '-', { h: 'Ngày bằng chữ' },
+    { t: 'Hôm nay: ngày 23 tháng 11 năm 2026', fn: () => insertToken(lineEl, '{Ngày tháng năm}') },
+    { t: 'Để trống: ngày … tháng … năm …', fn: () => insertToken(lineEl, '{Ngày tháng năm trống}') },
+    { t: 'Ngày cuối của bộ lọc, bằng chữ', fn: () => insertToken(lineEl, '{Đến ngày bằng chữ}') },
     '-', { t: 'Giá trị của cột', sub: cols.map((f) => ({ t: f.name, fn: () => insertToken(lineEl, '[' + f.name + ']') })) },
   ]);
 }
@@ -1261,7 +1269,7 @@ function syncRibbon() {
     $('rFmt').value = c.fmt || ''; if (document.activeElement !== $('rW')) $('rW').value = c.w; $('rA').value = c.agg || '';
     pressed('rMg', c.mg); pressed('rWrap', c.wrap);
   } else { $('rW').value = ''; }
-  $('rOrient').value = lay.orient; $('rGridsw').style.background = lay.grid; pressed('rZebra', lay.zebra);
+  $('rGridsw').style.background = lay.grid; pressed('rZebra', lay.zebra);
 }
 const selC = () => (S.tgt === 'col' ? L().cols[S.selCol] : null);
 $('rFont').onchange = () => { L().font = $('rFont').value; changed(); };
@@ -1282,7 +1290,6 @@ $('rMg').onclick = () => { const c = selC(); if (c) { c.mg = !c.mg; changed(true
 $('rWrap').onclick = () => { const c = selC(); if (c) { c.wrap = !c.wrap; changed(); } };
 $('rL').onclick = () => moveCol(S.selCol, S.selCol - 1); $('rR').onclick = () => moveCol(S.selCol, S.selCol + 1);
 $('rX').onclick = () => { if (S.tgt !== 'col' || S.selCol < 0) return; L().cols.splice(S.selCol, 1); S.selCol = -1; S.tgt = 'title'; changed(true); };
-$('rOrient').onchange = () => { L().orient = $('rOrient').value; changed(); };
 $('rGrid').oninput = () => { L().grid = $('rGrid').value; render(); }; $('rGrid').onchange = () => changed();
 $('rZebra').onclick = () => { L().zebra = !L().zebra; changed(); };
 // Thiết lập chung (bảng nhỏ)
@@ -1502,6 +1509,7 @@ function openAll(lvOpen) {
 }
 $('vSearch').addEventListener('input', debounce(() => { S.q = $('vSearch').value; S.cap = VIEW_CAP; render(); }, 200));
 $('vZoom').onchange = () => { S.zoom = +$('vZoom').value; render(); };
+$('vPdf').onclick = () => { if (!S.ran) return toast('Bấm Báo cáo trước khi tải PDF.'); exportPdf().catch((e) => { dlog('pdf.error', String(e && e.message || e)); toast('Không tạo được PDF: ' + (e && e.message || e), 7000); }); };
 $('vPrint').onclick = () => { if (!S.ran) return toast('Bấm Báo cáo trước khi in.'); doPrint(); };
 $('vXlsx').onclick = () => { if (!S.ran) return toast('Bấm Báo cáo trước khi tải Excel.'); exportXlsx().catch((e) => { dlog('xlsx.error', String(e && e.message || e)); toast('Không xuất được Excel: ' + (e && e.message || e), 6000); }); };
 function setTab(t) {
@@ -1514,14 +1522,78 @@ $('modeTabs').addEventListener('click', (e) => { const b = e.target.closest('but
 $('btnSide').onclick = () => { const h = document.body.classList.toggle('sidehid'); $('btnSide').textContent = h ? '»' : '«'; $('btnSide').title = h ? 'Mở thanh bên' : 'Thu gọn thanh bên'; setTimeout(() => S.cfg && render(), 0); };
 
 /* ---------------- in ---------------- */
+// Khổ A4: bảng hẹp in dọc, bảng rộng tự in ngang (và thu nhỏ nếu vẫn chưa vừa)
+const PAGE_PX = { P: 718, L: 1046 };
+const autoOrient = (tw) => (tw > PAGE_PX.P + 40 ? 'L' : 'P');
+function naturalWidth(lay) { return (lay.showNo ? 42 : 0) + lay.cols.filter((c) => S.fIdx.has(c.f)).reduce((a, c) => a + Math.max(30, +c.w || 120), 0); }
 function doPrint() {
-  const lay = L();
-  const pw = lay.orient === 'P' ? 718 : 1046;
+  const lay = L(), o = autoOrient(naturalWidth(lay)), pw = PAGE_PX[o];
   $('printRoot').innerHTML = reportHTML(lay, filteredRows(), 'print', S.fvRun, pw - 40);
-  const tw = parseFloat(($('printRoot').querySelector('table') || { style: {} }).style.width || '0');
-  const avail = lay.orient === 'P' ? 718 : 1046, z = tw > avail ? avail / (tw + 40) : 1;
-  $('pageCss').textContent = `@page{size:A4 ${lay.orient === 'P' ? 'portrait' : 'landscape'};margin:10mm}@media print{#printRoot .rpt{zoom:${z.toFixed(3)}}}`;
+  const tw = parseFloat(($('printRoot').querySelector('table') || { style: {} }).style.width || '0'), z = tw > pw ? pw / (tw + 40) : 1;
+  $('pageCss').textContent = `@page{size:A4 ${o === 'P' ? 'portrait' : 'landscape'};margin:10mm}@media print{#printRoot .rpt{zoom:${z.toFixed(3)}}}`;
   setTimeout(() => { try { window.print(); } catch (e) { toast('Trình duyệt chặn in trong khung này.'); } }, 50);
+}
+
+/* ---------------- tải PDF ---------------- */
+// jsPDF + AutoTable; phông DejaVu Serif Condensed (đủ dấu tiếng Việt), tải 1 lần khi cần
+const PDF_LIBS = ['https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js', 'https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js'];
+const PDF_FONT = 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSerifCondensed';
+const PDF_STYLES = { normal: '', bold: '-Bold', italic: '-Italic', bolditalic: '-BoldItalic' };
+const loadScript = (u) => new Promise((ok, no) => { if ([...document.scripts].some((x) => x.src === u)) return ok(); const el = document.createElement('script'); el.src = u; el.onload = ok; el.onerror = () => no(new Error('không tải được ' + u.split('/').pop())); document.head.appendChild(el); });
+let PDFP = null;
+function loadPdfKit() {
+  if (PDFP) return PDFP;
+  PDFP = (async () => {
+    for (const u of PDF_LIBS) await loadScript(u);
+    if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('thư viện PDF không chạy');
+    const fonts = {}; await Promise.all(Object.entries(PDF_STYLES).map(async ([k, suf]) => { const r = await fetch(PDF_FONT + suf + '.ttf'); if (!r.ok) throw new Error('không tải được phông chữ'); const buf = new Uint8Array(await r.arrayBuffer()); let bin = ''; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000)); fonts[k] = btoa(bin); }));
+    return fonts;
+  })().catch((e) => { PDFP = null; throw e; });
+  return PDFP;
+}
+const hexRgb = (h) => { h = String(h || '#000').replace('#', ''); if (h.length === 3) h = h.split('').map((x) => x + x).join(''); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; };
+async function exportPdf() {
+  toast('Đang tạo PDF…', 20000);
+  const fonts = await withTimeout(loadPdfKit(), 45000);
+  const lay = L(), rows = filteredRows(), tw0 = naturalWidth(lay), o = autoOrient(tw0);
+  const pdf = new window.jspdf.jsPDF({ orientation: o === 'L' ? 'landscape' : 'portrait', unit: 'pt', format: 'a4' });
+  for (const [k] of Object.entries(PDF_STYLES)) { pdf.addFileToVFS('rs-' + k + '.ttf', fonts[k]); pdf.addFont('rs-' + k + '.ttf', 'RS', k); }
+  const W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight(), M = 28, avail = W - 2 * M;
+  // bảng dựng sẵn ở vùng ẩn, AutoTable đọc cả gộp ô, màu nền, chữ đậm, căn lề
+  const tmp = document.createElement('div'); tmp.style.cssText = 'position:absolute;left:-100000px;top:0;width:3000px'; tmp.innerHTML = reportHTML(lay, rows, 'print', S.fvRun, 0); document.body.appendChild(tmp);
+  try {
+    const table = tmp.querySelector('table'); if (!table) throw new Error('báo cáo chưa có cột');
+    const widths = [...table.querySelectorAll('colgroup col')].map((c) => parseFloat(c.style.width) || 80), tw = widths.reduce((a, b) => a + b, 0);
+    const k = lay.fit !== false ? avail / tw : Math.min(avail / tw, 0.75); // px → pt, giãn / thu vừa khổ giấy
+    const fs = Math.max(5.5, Math.min(11, (+lay.fs || 13) * 0.75 * Math.min(1, k / 0.75)));
+    const sty = (s) => (s && s.b !== false && s.b ? (s.i ? 'bolditalic' : 'bold') : s && s.i ? 'italic' : 'normal');
+    let y = M + 4;
+    const line = (txt, s, size) => { if (!txt) return; pdf.setFont('RS', sty(s)); pdf.setFontSize(size); const al = (s && s.al) || 'c', x = al === 'l' ? M : al === 'r' ? W - M : W / 2; const parts = pdf.splitTextToSize(String(txt), avail); pdf.text(parts, x, y + size * 0.8, { align: al === 'l' ? 'left' : al === 'r' ? 'right' : 'center' }); y += parts.length * size * 1.25; };
+    line(lay.title, lay.sty.title, Math.max(10, (lay.sty.title.fs || 18) * 0.75 * Math.min(1, k / 0.75 + 0.2)));
+    for (const ln of lay.top || []) line(lineText(ln.text, rows, S.fvRun, lay), Object.assign({ al: 'c' }, ln.s), Math.max(7, ((ln.s && ln.s.fs) || lay.fs || 13) * 0.75));
+    if (lay.showF) for (const t of filterLines(S.fvRun)) line(t, { b: true, al: 'c' }, fs + 1);
+    const grid = hexRgb(lay.grid);
+    pdf.autoTable({
+      html: table, useCss: true, startY: y + 4, margin: { left: M, right: M, top: M, bottom: M }, theme: 'grid',
+      styles: { font: 'RS', fontSize: fs, cellPadding: { top: 2, bottom: 2, left: 3, right: 3 }, lineColor: grid, lineWidth: 0.4, overflow: 'linebreak', valign: 'middle', textColor: [0, 0, 0] },
+      headStyles: { font: 'RS' }, bodyStyles: { font: 'RS' }, footStyles: { font: 'RS' },
+      columnStyles: Object.fromEntries(widths.map((w, i) => [i, { cellWidth: w * k }])),
+      didParseCell: (d) => { d.cell.styles.font = 'RS'; d.cell.text = d.cell.text.map((t) => t.replace(/^[−+]\s*/, '')); },
+    });
+    y = pdf.lastAutoTable.finalY + 8;
+    for (const ln of lay.bottom || []) { if (y > H - M - 20) { pdf.addPage(); y = M; } line(lineText(ln.text, rows, S.fvRun, lay), Object.assign({ al: 'c' }, ln.s), Math.max(7, ((ln.s && ln.s.fs) || lay.fs || 13) * 0.75)); }
+    const F = lay.foot;
+    if (F.show) {
+      if (y > H - M - 90) { pdf.addPage(); y = M; }
+      y += 10; const cx = [M + avail / 6, W / 2, W - M - avail / 6], size = Math.max(8, fs + 1);
+      const put = (i, txt, st, dy) => { if (!txt) return; pdf.setFont('RS', st); pdf.setFontSize(size); pdf.text(String(txt), cx[i], y + dy, { align: 'center' }); };
+      const dt = F.date ? lineText(F.dt ?? 'Ngày ..... tháng ..... năm .......', rows, S.fvRun, lay) : '';
+      let dy = 0; if (dt) { put(2, dt, 'italic', size); dy = size * 1.3; }
+      [['l', 'ls'], ['c', 'cs'], ['r', 'rs']].forEach(([a, b], i) => { put(i, F[a], 'bold', dy + size); put(i, F[b], 'italic', dy + size * 2.3); });
+    }
+    const pages = pdf.internal.getNumberOfPages(); for (let i = 1; i <= pages; i++) { pdf.setPage(i); pdf.setFont('RS', 'italic'); pdf.setFontSize(7); pdf.setTextColor(120); pdf.text(`Trang ${i}/${pages}`, W - M, H - 12, { align: 'right' }); }
+    pdf.save(fileName('pdf')); toast('Đã tải PDF (' + pages + ' trang, khổ A4 ' + (o === 'L' ? 'ngang' : 'dọc') + ').');
+  } finally { tmp.remove(); }
 }
 
 /* ---------------- xuất Excel ---------------- */
@@ -1588,7 +1660,7 @@ async function exportXlsx() {
   ws['!merges'] = merges;
   ws['!cols'] = (lay.showNo ? [{ wch: 6 }] : []).concat(cols.map((c) => ({ wch: Math.max(6, Math.round((+c.w || 120) / 7)) })));
   ws['!rows'] = rowsMeta.map((m) => (m.level ? { level: Math.min(7, m.level) } : {}));
-  ws['!pageSetup'] = { orientation: lay.orient === 'P' ? 'portrait' : 'landscape', fitToWidth: 1 };
+  ws['!pageSetup'] = { orientation: autoOrient(naturalWidth(lay)) === 'P' ? 'portrait' : 'landscape', fitToWidth: 1 };
   const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, (lay.name || 'Bao cao').replace(/[\\/?*[\]:]/g, ' ').slice(0, 31));
   download(new Blob([X.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileName('xlsx'));
   toast('Đã tải file Excel.');
@@ -1868,6 +1940,45 @@ function serverFilter(fv) {
   }
   return conds.length ? { conjunction: 'and', conditions: conds } : null;
 }
+// Chia khoảng ngày thành nhiều đợt, mỗi đợt dưới giới hạn 5.000 của Lark.
+// Mỗi đợt hỏi Lark rộng hơn 1 ngày mỗi phía, rồi giữ lại đúng các ngày của đợt → không trùng, không sót.
+async function fetchChunked(c, cond, quiet) {
+  const F = S.cfg.filters.find((x) => DATE_KINDS.has(x.kind) && S.fIdx.get(x.f) && SERVER_DATE_TYPES().has(S.fIdx.get(x.f).type))
+    || (() => { const f = (c.src.packCols || []).find((x) => SERVER_DATE_TYPES().has(x.type)); return f ? { f: f.id, kind: 'date', id: '_' } : null; })();
+  if (!F || !dashboard.getPreviewData) return null; const fid = F.f;
+  const fv = quiet && S.ran ? S.fvRun : S.fv, v = fv[F.id] || {};
+  let lo = F.kind === 'day' ? v.d : F.kind === 'date' ? v.from : '', hi = F.kind === 'day' ? v.d : v.to; const userRange = !!(lo || hi);
+  const other = ((serverFilter(fv) || {}).conditions || []).filter((x) => x.fieldId !== fid);
+  const fiFor = (a, b, extra) => ({ conjunction: 'and', conditions: [...other, ...(extra || [{ fieldId: fid, operator: 'isGreater', value: dayStart(a) - DAY }, { fieldId: fid, operator: 'isLess', value: dayEnd(b) + DAY }])] });
+  const ask = async (fi, groups) => { const cc = cond(fi); if (groups) cc.groups = groups; return withTimeout(dashboard.getPreviewData(cc), 30000); };
+  // 1) đếm số dòng theo từng ngày để chia đợt
+  let days = null;
+  try {
+    const d = await ask(lo || hi ? fiFor(lo || '1970-01-02', hi || '2100-12-30') : (other.length ? { conjunction: 'and', conditions: other } : null), [{ fieldId: fid }]);
+    if (Array.isArray(d) && d.length > 1 && rows0(d) < LARK_CAP - 1) {
+      const m = new Map(); for (const row of d.slice(1)) { const cell = row && row[0]; if (!cell) continue; const ms = typeof cell.value === 'number' ? cell.value : parseDate(cell.text ?? cell.value); if (!ms) continue; const iso = isoDay(ms); m.set(iso, (m.get(iso) || 0) + ((row[1] && +row[1].value) || 1)); }
+      if (m.size) days = [...m.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1));
+    }
+    dlog('chunk.days', days ? days.length + ' ngày' : 'không đếm được theo ngày → chia đôi dần');
+  } catch (e) { dlog('chunk.days.error', String(e && e.message || e)); }
+  if (days) { lo = lo || days[0][0]; hi = hi || days[days.length - 1][0]; }
+  lo = lo || '2000-01-01'; hi = hi || isoDay(Date.now() + 366 * DAY);
+  let plan = [];
+  if (days) { const budget = Math.floor(LARK_CAP * 0.8); let a = null, sum = 0, prev = null; for (const [iso, n] of days) { if (iso < lo || iso > hi) continue; if (a && sum + n > budget) { plan.push([a, prev]); a = null; sum = 0; } if (!a) a = iso; sum += n; prev = iso; } if (a) plan.push([a, prev]); }
+  else plan = [[lo, hi]];
+  const out = []; let capped = false, n = 0;
+  const prog = () => { S.loadCount = out.length; const el = $('ldCount'); if (el) el.textContent = ` đợt ${n}/${Math.max(n, plan.length)} · ${out.length.toLocaleString('vi-VN')} dòng`; $('sline').textContent = `Đang lấy dữ liệu… đợt ${n} · ${out.length.toLocaleString('vi-VN')} dòng`; };
+  const get = async (a, b, depth) => {
+    n++; prog(); const d = await ask(fiFor(a, b));
+    if (rows0(d) >= LARK_CAP - 1 && a < b && depth < 24) { const mid = isoDay(Math.floor((dayStart(a) + dayStart(b)) / 2 / DAY) * DAY + 12 * 3600e3); const nx = isoDay(dayStart(mid) + DAY + 12 * 3600e3); await get(a, mid, depth + 1); await get(nx > b ? b : nx, b, depth + 1); return; }
+    if (rows0(d) >= LARK_CAP - 1) capped = true;
+    for (const r of unpackRows(d, c.src.packCols)) { const ms = r[fid]; if (ms === null || ms === undefined) continue; const iso = isoDay(ms); if (iso >= a && iso <= b) out.push(r); }
+  };
+  for (const [a, b] of plan) await get(a, b, 0);
+  // dòng chưa có ngày: chỉ lấy khi không lọc theo ngày
+  if (!userRange) { try { const d = await ask({ conjunction: 'and', conditions: [...other, { fieldId: fid, operator: 'isEmpty', value: null }] }); for (const r of unpackRows(d, c.src.packCols)) if (r[fid] === null || r[fid] === undefined) out.push(r); } catch (e) { dlog('chunk.empty.error', String(e && e.message || e)); } }
+  prog(); return { rows: out, capped, n };
+}
 async function refreshLive0(c, quiet) {
   S.liveBusy = true; if (!quiet) { S.loading = true; S.loadCount = 0; render(); }
   try {
@@ -1887,6 +1998,14 @@ async function refreshLive0(c, quiet) {
       if (!data) for (const t of [...new Set([c.src.dataToken, c.src.baseToken, sc.baseToken].filter(Boolean))]) { const d2 = await dashFor(t).catch(() => null); if (d2 && d2 !== dashboard) { tries.push(['base getData', () => d2.getData()]); if (d2.getPreviewData) tries.push(['base preview', () => d2.getPreviewData(cond(null))]); } }
       if (!data && !S.noGetData) tries.push(['đọc lại', async () => { await sleep(1500); return dashboard.getData(); }]);
       for (const [lb, fn] of tries) { try { const alt = await withTimeout(fn(), 20000); dlog('live.try', lb + ' → ' + rows0(alt)); if (good(alt)) { data = alt; how = lb; break; } } catch (e) { dlog('live.try', lb + ' lỗi: ' + String(e && e.message || e)); } }
+    }
+    // Chạm giới hạn → chia nhỏ theo ngày, lấy lần lượt từng đợt rồi ghép lại (người xem chỉ thấy "đang lấy dữ liệu")
+    let chunked = null;
+    if (data && rows0(data) >= LARK_CAP - 1 && !ungrouped(data)) { try { chunked = await fetchChunked(c, cond, quiet); } catch (e) { dlog('chunk.error', String(e && e.message || e)); } }
+    if (chunked) {
+      S.capped = chunked.capped; S.fetchHow = 'chia ' + chunked.n + ' đợt'; S.fetchFi = 'chunk';
+      S.rows = computeCalcs(chunked.rows); S.rowsAt = Date.now(); S.liveAt = Date.now(); setStatus('ok', 'Đã cập nhật ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
+      dlog('chunk.done', `${chunked.n} đợt · ${chunked.rows.length} dòng${chunked.capped ? ' · vẫn có ngày vượt giới hạn' : ''}`); return;
     }
     if (data && ungrouped(data) && rows0(data) > 0) throw new Error('Lark chỉ trả tổng số thay vì từng dòng: khối chưa được nhóm theo cột gói. Người sửa khối hãy mở Sửa khối → Kiểm tra → Lưu khối.');
     const rows = unpackRows(data || [], c.src.packCols);
