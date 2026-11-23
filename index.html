@@ -110,6 +110,8 @@ body.sidehid .layout{grid-template-columns:minmax(0,1fr)}body.sidehid .side{disp
 .ffoot{padding:10px 12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px;background:#fff}
 .ffoot .pend{font-size:11.5px;color:var(--warn)}
 #fvRun{height:36px;font-weight:600}
+#fvRun.cancel{background:#fff;color:#b42318;border-color:#b42318}
+#fvRun.cancel svg{display:none}
 .pop{position:fixed;z-index:80;width:270px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px #1b2b4a2e;padding:6px;display:flex;flex-direction:column;gap:5px}
 .pop .pl{max-height:260px;overflow:auto;display:flex;flex-direction:column}
 .pop label{display:flex;align-items:center;gap:7px;padding:5px 6px;border-radius:6px;font-size:12.5px;cursor:pointer}.pop label:hover{background:var(--soft)}.pop label input{width:auto;margin:0}.pop label span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pop label small{color:#9aa3b2}
@@ -154,7 +156,7 @@ body.sidehid .layout{grid-template-columns:minmax(0,1fr)}body.sidehid .side{disp
 .rpt th{white-space:normal;vertical-align:middle;position:sticky;top:0;z-index:2;overflow:visible}
 .rpt th .hl{display:block;overflow:hidden;text-overflow:ellipsis}
 .rpt td.w{white-space:normal}.rpt td.mg{vertical-align:middle;white-space:normal}
-.rpt td.no{text-align:center;color:#555}
+.rpt td.no{text-align:center;color:#555;white-space:nowrap;overflow:visible}
 .rpt tr.gr td{cursor:pointer}.rpt tr.gr td:first-child{white-space:nowrap}
 .rpt tr.gr .tg{display:inline-block;width:13px;height:13px;text-align:center;border:1px solid #8f959e;border-radius:2px;font:700 11px/11px Arial,sans-serif;color:#444;margin-right:5px;vertical-align:-1px;background:#fff}
 .rpt.view tr.dr:hover td{background-image:linear-gradient(#fff3b0aa,#fff3b0aa)}
@@ -379,8 +381,7 @@ body.dashview .top{display:none}
     <span style="flex:1"></span>
     <select id="vZoom" aria-label="Thu phóng"><option value="0.75">75%</option><option value="0.9">90%</option><option value="1" selected>100%</option><option value="1.1">110%</option><option value="1.25">125%</option></select>
     <button id="vPrint" class="ib"><svg class="i"><use href="#i-print"/></svg>In</button>
-    <button id="vPdf" class="ib" title="Tải về PDF (tự chọn khổ dọc / ngang)"><svg class="i"><use href="#i-dl"/></svg>PDF</button>
-    <button id="vXlsx" class="ib primary"><svg class="i"><use href="#i-dl"/></svg>Excel</button>
+    <button id="vDl" class="ib primary" title="Tải báo cáo về máy" aria-haspopup="menu"><svg class="i"><use href="#i-dl"/></svg>Tải về ▾</button>
   </div>
   <div class="stage" id="stage"><div id="sheet"><div class="empty">Đang tải…</div></div></div>
   <div class="foot"><div class="ltabs" id="ltabs"></div><div class="sline" id="sline"></div></div>
@@ -416,7 +417,7 @@ body.dashview .top{display:none}
 const SDK_URL = 'https://esm.sh/@lark-base-open/js-sdk@1.0.2';
 const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
 const PACK_SEP = '‖', PACK_TAG = '§', PACK_NAME = 'Gói dữ liệu báo cáo';
-const BLOCK_MAX = 12000, VER = '1.6', VIEW_CAP = Infinity, CACHE_MS = 60000;
+const BLOCK_MAX = 12000, VER = '1.7', VIEW_CAP = Infinity, CACHE_MS = 60000;
 let SDK = null, bitable = null, dashboard = null, workspace = null, FieldType = null;
 const FT = (k, d) => (FieldType && FieldType[k] !== undefined ? FieldType[k] : d);
 
@@ -848,6 +849,8 @@ function demoRows(lay) {
 
 /* ---------------- vẽ báo cáo ---------------- */
 const inSel = (i) => S.selCol === i || (S.selRange && i >= S.selRange[0] && i <= S.selRange[1]);
+// cột STT rộng theo số chữ số của số dòng lớn nhất (10.000+ dòng không bị che)
+function noW(lay, n) { const fs = +lay.fs || 13; return Math.max(42, Math.ceil(String(Math.max(1, n == null ? S.rows.length : n)).length * fs * 0.62 + 2 * (PADS[lay.pad] || 3) + 12)); }
 const loadingText = () => `<span class="ld" aria-hidden="true"></span>Đang lấy dữ liệu từ Lark…<span id="ldCount">${S.loadCount ? ' ' + S.loadCount.toLocaleString('vi-VN') + ' dòng' : ''}</span>`;
 function reportHTML(lay, rows, mode, fv, availW) {
   const design = mode === 'design', print = mode === 'print' || mode === 'xls', allOpen = mode === 'xls' || design;
@@ -865,9 +868,9 @@ function reportHTML(lay, rows, mode, fv, availW) {
   h += `</div>`;
   if (!ci.length) return h + `<div class="empty">${design ? 'Chưa có cột nào. Tick cột ở mục <b>2 · Cột hiển thị</b> bên trái.' : 'Báo cáo chưa có cột.'}</div></div>`;
   const cols = ci.map((i) => lay.cols[i]);
-  let widths = (lay.showNo ? [42] : []).concat(cols.map((c) => Math.max(30, +c.w || 120)));
+  const nw = noW(lay, rows.length); let widths = (lay.showNo ? [nw] : []).concat(cols.map((c) => Math.max(30, +c.w || 120)));
   let tw = widths.reduce((a, b) => a + b, 0);
-  if (!design && lay.fit !== false && availW > tw) { const fixed = lay.showNo ? 42 : 0, k = (availW - fixed) / (tw - fixed); widths = widths.map((w, i) => (i === 0 && lay.showNo ? w : Math.floor(w * k))); tw = widths.reduce((a, b) => a + b, 0); } // giãn cột vừa khung
+  if (!design && lay.fit !== false && availW > tw) { const fixed = lay.showNo ? nw : 0, k = (availW - fixed) / (tw - fixed); widths = widths.map((w, i) => (i === 0 && lay.showNo ? w : Math.floor(w * k))); tw = widths.reduce((a, b) => a + b, 0); } // giãn cột vừa khung
   const hs = css(sty.head), off = lay.showNo ? 1 : 0;
   const nFz = +lay.freeze > 0 ? Math.min(widths.length, off + +lay.freeze) : 0, lefts = []; widths.reduce((a, w, i) => ((lefts[i] = a), a + w), 0);
   const fz = (pos) => (pos < nFz && !print ? { c: ' fz', s: `left:${lefts[pos]}px;` } : { c: '', s: '' }); // neo cố định cột
@@ -960,8 +963,8 @@ function render() {
   st.scrollLeft = sx; st.scrollTop = sy;
   fixSticky(); S.ms = performance.now() - t0;
   const tot = S.rows.length;
-  $('sline').textContent = design ? `Thiết kế · ${lay.cols.length} cột · ${lay.groups.length} cấp nhóm` : S.loading ? 'Đang lấy dữ liệu…' : !S.ran ? 'Chưa chạy báo cáo' :
-    `Tổng cộng: ${srcRows(rows).length.toLocaleString('vi-VN')}${srcRows(rows).length !== tot ? ' / ' + tot.toLocaleString('vi-VN') : ''} dòng (${(S.ms / 1000).toFixed(2)}s)` + (S.rowsAt ? ' · dữ liệu lúc ' + new Date(S.rowsAt).toLocaleTimeString('vi-VN') : '');
+  $('sline').textContent = design ? `Thiết kế · ${lay.cols.length} cột · ${lay.groups.length} cấp nhóm` : S.loading ? 'Đang lấy dữ liệu… (Esc để hủy)' : !S.ran ? 'Chưa chạy báo cáo' :
+    `Tổng cộng: ${srcRows(rows).length.toLocaleString('vi-VN')}${srcRows(rows).length !== tot ? ' / ' + tot.toLocaleString('vi-VN') : ''} dòng (${(S.ms / 1000).toFixed(2)}s)` + (S.rowsAt ? ' · dữ liệu lúc ' + new Date(S.rowsAt).toLocaleString('vi-VN', S.fromCache ? { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' } : { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + (S.fromCache ? ' (lưu trên máy)' : '') : '') + (S.bgBusy ? ' · đang cập nhật từ Lark…' : '');
   renderLayoutTabs();
   if (design) syncRibbon(); else renderLevels();
 }
@@ -1476,23 +1479,65 @@ async function restoreRun() {
   S.fv = Object.assign({}, S.fv, o.fv || {}); renderViewFilters(); dlog('restore', 'chạy lại báo cáo sau khi tải lại'); await runReport(false); return true;
 }
 let runSeq = 0;
+const CANCEL = 'rs-cancel', isCancel = (e) => e && e.message === CANCEL;
+function setRunBtn(busy) { const btn = $('fvRun'); btn.disabled = false; btn.classList.toggle('cancel', busy); btn.lastChild.textContent = busy ? 'Hủy chạy' : 'Báo cáo'; btn.title = busy ? 'Dừng lấy dữ liệu (Esc)' : ''; }
+// Hủy lần chạy đang dở: báo cáo cũ (nếu có) giữ nguyên, điều kiện lọc vừa sửa vẫn còn để chạy lại
+function cancelRun(why) {
+  if (!S.running) return; runSeq++; S.running = false; if (S.liveTok) S.liveTok.stop = true; S.livePromise = null; S.liveBusy = false;
+  S.loading = false; S.loadCount = 0; setRunBtn(false); dlog('run.cancel', why || 'người dùng hủy'); render(); if (S.ran) markPend(); toast('Đã hủy chạy báo cáo.');
+}
 async function runReport(force) {
-  closePop(); const my = ++runSeq, btn = $('fvRun'); btn.disabled = true; btn.lastChild.textContent = 'Đang lấy dữ liệu…';
+  if (S.running) return cancelRun();
+  closePop(); const my = ++runSeq; S.running = true; setRunBtn(true);
   S.loading = true; S.fetchNote = ''; render();
   try {
-    await ensureData(force);
-    if (!S.rows.length) { dlog('run.empty', 'Lark chưa trả dòng nào — thử lại'); S.loading = true; render(); await sleep(1500); await ensureData(true); } // lần đầu Lark hay trả rỗng
+    const got = await ensureData(force);
     if (my !== runSeq) return;
-    S.fvRun = clone(S.fv); S.ran = true; S.pend = false; S.cap = VIEW_CAP; S.open = {}; S.loading = false; render(); renderViewFilters(); saveRunState(); if (isView()) startLive(S.cfg);
-  } catch (e) { S.loading = false; showErr(e); }
-  finally { if (my === runSeq) { btn.disabled = false; btn.lastChild.textContent = 'Báo cáo'; S.loading = false; } }
+    if (!S.rows.length && got !== 'cache') { dlog('run.empty', 'Lark chưa trả dòng nào — thử lại'); S.loading = true; render(); await sleep(1500); if (my !== runSeq) return; await ensureData(true); } // lần đầu Lark hay trả rỗng
+    if (my !== runSeq) return;
+    S.fvRun = clone(S.fv); S.ran = true; S.pend = false; S.cap = VIEW_CAP; S.open = {}; S.loading = false; S.running = false; setRunBtn(false); render(); renderViewFilters(); saveRunState(); if (isView()) startLive(S.cfg);
+    if (got === 'cache') bgRefresh(my); // đã hiện dữ liệu lưu trên máy → cập nhật mới từ Lark ở nền
+  } catch (e) { if (my !== runSeq || isCancel(e)) return; S.loading = false; showErr(e); }
+  finally { if (my === runSeq) { S.running = false; setRunBtn(false); S.loading = false; } }
 }
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.running) cancelRun('Esc'); });
+// cập nhật ngầm sau khi đã hiện dữ liệu từ bộ nhớ máy
+function bgRefresh(my) {
+  S.bgBusy = true; render();
+  refreshLive(S.cfg, true).then(() => { if (my === runSeq) { S.fromCache = 0; dlog('cache.refresh', S.rows.length + ' dòng mới từ Lark'); } })
+    .catch((e) => { if (!isCancel(e)) dlog('cache.refresh.error', String(e && e.message || e)); })
+    .finally(() => { S.bgBusy = false; if (my === runSeq) render(); });
+}
+const liveKey = (fv) => { const c = S.cfg || {}, src = c.src || {}; const fi = serverFilter(fv); return [src.tableId, src.packId, src.packSig || '', fi ? JSON.stringify(fi) : ''].join('|'); };
 async function ensureData(force) {
-  const fi = isView() ? serverFilter(S.fv) : null, key = isView() ? 'live|' + (fi ? JSON.stringify(fi) : '') : (S.cfg.src.tableId + '|' + (S.cfg.src.viewId || ''));
-  if (!force && S.rows.length && S.rowsKey === key && !S.capped && Date.now() - S.rowsAt < CACHE_MS) return;
+  const key = isView() ? 'live|' + liveKey(S.fv) : (S.cfg.src.tableId + '|' + (S.cfg.src.viewId || ''));
+  if (!force && S.rows.length && S.rowsKey === key && !S.capped && Date.now() - S.rowsAt < CACHE_MS) return 'mem';
+  if (isView() && !force) { // dữ liệu lần trước cùng điều kiện, lưu trên máy người dùng → hiện ngay
+    const hit = await LC.get(key);
+    if (hit && hit.rows && hit.rows.length) { S.rows = computeCalcs(hit.rows); S.rowsAt = hit.at; S.liveAt = hit.at; S.capped = !!hit.capped; S.fetchHow = 'bộ nhớ máy'; S.fromCache = hit.at; S.rowsKey = key; dlog('cache.hit', hit.rows.length + ' dòng · lưu lúc ' + new Date(hit.at).toLocaleString('vi-VN')); return 'cache'; }
+  }
   if (isView()) await refreshLive(S.cfg, false); else await loadRecords();
-  S.rowsKey = key;
+  S.rowsKey = key; S.fromCache = 0; return 'live';
 }
+/* ---------- bộ nhớ đệm trên máy (IndexedDB): mỗi người dùng / trình duyệt giữ kết quả của riêng mình ---------- */
+const LC = (() => {
+  const MAX = 8; let dbp = null;
+  const db = () => dbp || (dbp = new Promise((ok, no) => { try { const r = indexedDB.open('rs-report-cache', 1); r.onupgradeneeded = () => r.result.createObjectStore('runs'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); } catch (e) { no(e); } }));
+  const tx = async (mode, fn) => { const d = await db(); return new Promise((ok, no) => { const t = d.transaction('runs', mode), st = t.objectStore('runs'); const r = fn(st); t.oncomplete = () => ok(r && r.result); t.onerror = () => no(t.error); t.onabort = () => no(t.error); }); };
+  const idx = () => { try { return JSON.parse(localStorage.getItem('rs-cache-idx') || '[]'); } catch (e) { return []; } };
+  return {
+    async get(k) { try { return await withTimeout(tx('readonly', (st) => st.get(k)), 4000); } catch (e) { return null; } },
+    async set(k, v) {
+      try {
+        await tx('readwrite', (st) => st.put(v, k));
+        let ix = idx().filter((x) => x[0] !== k); ix.unshift([k, v.at]); const drop = ix.slice(MAX); ix = ix.slice(0, MAX);
+        if (drop.length) await tx('readwrite', (st) => { for (const [d] of drop) st.delete(d); });
+        localStorage.setItem('rs-cache-idx', JSON.stringify(ix));
+      } catch (e) { dlog('cache.save.error', String(e && e.message || e)); }
+    },
+    async clear() { try { await tx('readwrite', (st) => st.clear()); localStorage.removeItem('rs-cache-idx'); } catch (e) {} },
+  };
+})();
 
 /* ---------------- thanh công cụ xem ---------------- */
 // Thanh cấp nhóm: 1 = chỉ nhóm cấp 1, 2 = tới cấp 2 …, "Tất cả" = mở cả dòng chi tiết
@@ -1509,9 +1554,9 @@ function openAll(lvOpen) {
 }
 $('vSearch').addEventListener('input', debounce(() => { S.q = $('vSearch').value; S.cap = VIEW_CAP; render(); }, 200));
 $('vZoom').onchange = () => { S.zoom = +$('vZoom').value; render(); };
-$('vPdf').onclick = () => { if (!S.ran) return toast('Bấm Báo cáo trước khi tải PDF.'); exportPdf().catch((e) => { dlog('pdf.error', String(e && e.message || e)); toast('Không tạo được PDF: ' + (e && e.message || e), 7000); }); };
+const doPdf = () => { if (!S.ran) return toast('Bấm Báo cáo trước khi tải PDF.'); exportPdf().catch((e) => { dlog('pdf.error', String(e && e.message || e)); toast('Không tạo được PDF: ' + (e && e.message || e), 7000); }); };
 $('vPrint').onclick = () => { if (!S.ran) return toast('Bấm Báo cáo trước khi in.'); doPrint(); };
-$('vXlsx').onclick = () => { if (!S.ran) return toast('Bấm Báo cáo trước khi tải Excel.'); exportXlsx().catch((e) => { dlog('xlsx.error', String(e && e.message || e)); toast('Không xuất được Excel: ' + (e && e.message || e), 6000); }); };
+const doXlsx = () => { if (!S.ran) return toast('Bấm Báo cáo trước khi tải Excel.'); exportXlsx().catch((e) => { dlog('xlsx.error', String(e && e.message || e)); toast('Không xuất được Excel: ' + (e && e.message || e), 6000); }); };
 function setTab(t) {
   S.tab = t; S.vlay = null; if (S.cfg && !S.dash) { const o = loadRunState() || {}; try { const v = JSON.stringify({ ...o, fv: o.fv || {}, cur: S.cfg.cur, at: Date.now(), tab: t, ran: t === 'view' ? !!o.ran : false }); sessionStorage.setItem(runKey(), v); localStorage.setItem(runKey(), v); } catch (e) {} } document.querySelectorAll('#modeTabs button').forEach((b) => b.classList.toggle('on', b.dataset.m === t));
   $('pDesign').hidden = t !== 'design'; $('pView').hidden = t !== 'view'; $('sTitle').textContent = t === 'view' ? 'Điều kiện lọc' : 'Thiết lập báo cáo'; $('fvReset').hidden = t !== 'view'; $('ribbon').hidden = t !== 'design'; $('barView').hidden = t !== 'view';
@@ -1525,7 +1570,7 @@ $('btnSide').onclick = () => { const h = document.body.classList.toggle('sidehid
 // Khổ A4: bảng hẹp in dọc, bảng rộng tự in ngang (và thu nhỏ nếu vẫn chưa vừa)
 const PAGE_PX = { P: 718, L: 1046 };
 const autoOrient = (tw) => (tw > PAGE_PX.P + 40 ? 'L' : 'P');
-function naturalWidth(lay) { return (lay.showNo ? 42 : 0) + lay.cols.filter((c) => S.fIdx.has(c.f)).reduce((a, c) => a + Math.max(30, +c.w || 120), 0); }
+function naturalWidth(lay) { return (lay.showNo ? noW(lay) : 0) + lay.cols.filter((c) => S.fIdx.has(c.f)).reduce((a, c) => a + Math.max(30, +c.w || 120), 0); }
 function doPrint() {
   const lay = L(), o = autoOrient(naturalWidth(lay)), pw = PAGE_PX[o];
   $('printRoot').innerHTML = reportHTML(lay, filteredRows(), 'print', S.fvRun, pw - 40);
@@ -1658,7 +1703,7 @@ async function exportXlsx() {
   const ws = X.utils.aoa_to_sheet(aoa.map((r) => r.map((v) => (v && typeof v === 'object' ? v.v : v))));
   aoa.forEach((r, ri) => r.forEach((v, ci) => { const ref = X.utils.encode_cell({ r: ri, c: ci }); const cell = ws[ref] || (ws[ref] = { t: 's', v: '' }); if (v && typeof v === 'object') { cell.t = 'n'; cell.z = v.z; } const st = styles[ri][ci]; if (st) { cell.s = st; if (st.numFmt && cell.t === 'n' && !(v && typeof v === 'object')) cell.z = st.numFmt; } }));
   ws['!merges'] = merges;
-  ws['!cols'] = (lay.showNo ? [{ wch: 6 }] : []).concat(cols.map((c) => ({ wch: Math.max(6, Math.round((+c.w || 120) / 7)) })));
+  ws['!cols'] = (lay.showNo ? [{ wch: Math.max(6, String(rows.length).length + 3) }] : []).concat(cols.map((c) => ({ wch: Math.max(6, Math.round((+c.w || 120) / 7)) })));
   ws['!rows'] = rowsMeta.map((m) => (m.level ? { level: Math.min(7, m.level) } : {}));
   ws['!pageSetup'] = { orientation: autoOrient(naturalWidth(lay)) === 'P' ? 'portrait' : 'landscape', fitToWidth: 1 };
   const wb = X.utils.book_new(); X.utils.book_append_sheet(wb, ws, (lay.name || 'Bao cao').replace(/[\\/?*[\]:]/g, ' ').slice(0, 31));
@@ -1917,14 +1962,18 @@ async function saveDash() {
     if (result === 'ok') { dirty = false; setStatus('ok', 'Đã lưu khối'); }
   }
 }
+$('vDl').onclick = (e) => { if (!S.ran) return toast('Bấm Báo cáo trước khi tải về.'); const r = e.currentTarget.getBoundingClientRect(); showMenu(r.right - 220, r.bottom + 4, [['Excel (.xlsx)', doXlsx], ['PDF — khổ A4 tự chọn dọc / ngang', doPdf]]); };
 $('btnDashSave').onclick = () => saveDash();
 const rows0 = (d) => (Array.isArray(d) ? d.length - 1 : 0);
 const ungrouped = (d) => !Array.isArray(d) || d.length < 2 || !d[0] || d[0].length < 2;
 function refreshLive(c, quiet) {
   if (!c) return Promise.resolve();
-  if (S.livePromise) { if (!quiet && !S.loading) { S.loading = true; render(); } return S.livePromise; } // đang lấy → chờ cùng lần đó
-  S.livePromise = refreshLive0(c, quiet).finally(() => { S.livePromise = null; });
-  return S.livePromise;
+  const key = liveKey(quiet && S.ran ? S.fvRun : S.fv);
+  if (S.livePromise && S.liveKeyNow === key) { if (!quiet && !S.loading) { S.loading = true; render(); } return S.livePromise; } // đang lấy cùng điều kiện → chờ cùng lần đó
+  if (S.liveTok) S.liveTok.stop = true; // điều kiện khác → bỏ lần cũ
+  const tok = (S.liveTok = { stop: false }); S.liveKeyNow = key;
+  const pr = refreshLive0(c, quiet, tok, key).finally(() => { if (S.livePromise === pr) S.livePromise = null; });
+  S.livePromise = pr; return pr;
 }
 // Lark chỉ trả tối đa ~5.000 nhóm dòng mỗi lần → gửi điều kiện lọc ngày lên Lark (filterInfo) để Lark lọc trước
 const LARK_CAP = window.__LARK_CAP || 5000, DAY = 864e5; // __LARK_CAP: chỉ để kiểm thử
@@ -1960,14 +2009,15 @@ async function fetchChunked(c, cond, quiet) {
       if (m.size) days = [...m.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1));
     }
     dlog('chunk.days', days ? days.length + ' ngày' : 'không đếm được theo ngày → chia đôi dần');
-  } catch (e) { dlog('chunk.days.error', String(e && e.message || e)); }
+  } catch (e) { if (isCancel(e)) throw e; dlog('chunk.days.error', String(e && e.message || e)); }
   if (days) { lo = lo || days[0][0]; hi = hi || days[days.length - 1][0]; }
   lo = lo || '2000-01-01'; hi = hi || isoDay(Date.now() + 366 * DAY);
   let plan = [];
   if (days) { const budget = Math.floor(LARK_CAP * 0.8); let a = null, sum = 0, prev = null; for (const [iso, n] of days) { if (iso < lo || iso > hi) continue; if (a && sum + n > budget) { plan.push([a, prev]); a = null; sum = 0; } if (!a) a = iso; sum += n; prev = iso; } if (a) plan.push([a, prev]); }
   else plan = [[lo, hi]];
   const out = []; let capped = false, n = 0;
-  const prog = () => { S.loadCount = out.length; const el = $('ldCount'); if (el) el.textContent = ` đợt ${n}/${Math.max(n, plan.length)} · ${out.length.toLocaleString('vi-VN')} dòng`; $('sline').textContent = `Đang lấy dữ liệu… đợt ${n} · ${out.length.toLocaleString('vi-VN')} dòng`; };
+  const tok = S.liveTok; // đã hủy thì thôi cập nhật tiến độ
+  const prog = () => { if ((tok && tok.stop) || (quiet && S.ran)) return; /* cập nhật nền: giữ nguyên báo cáo đang hiện */ S.loadCount = out.length; const el = $('ldCount'); if (el) el.textContent = ` đợt ${n}/${Math.max(n, plan.length)} · ${out.length.toLocaleString('vi-VN')} dòng`; $('sline').textContent = `Đang lấy dữ liệu… đợt ${n} · ${out.length.toLocaleString('vi-VN')} dòng`; };
   const get = async (a, b, depth) => {
     n++; prog(); const d = await ask(fiFor(a, b));
     if (rows0(d) >= LARK_CAP - 1 && a < b && depth < 24) { const mid = isoDay(Math.floor((dayStart(a) + dayStart(b)) / 2 / DAY) * DAY + 12 * 3600e3); const nx = isoDay(dayStart(mid) + DAY + 12 * 3600e3); await get(a, mid, depth + 1); await get(nx > b ? b : nx, b, depth + 1); return; }
@@ -1976,16 +2026,18 @@ async function fetchChunked(c, cond, quiet) {
   };
   for (const [a, b] of plan) await get(a, b, 0);
   // dòng chưa có ngày: chỉ lấy khi không lọc theo ngày
-  if (!userRange) { try { const d = await ask({ conjunction: 'and', conditions: [...other, { fieldId: fid, operator: 'isEmpty', value: null }] }); for (const r of unpackRows(d, c.src.packCols)) if (r[fid] === null || r[fid] === undefined) out.push(r); } catch (e) { dlog('chunk.empty.error', String(e && e.message || e)); } }
+  if (!userRange) { try { const d = await ask({ conjunction: 'and', conditions: [...other, { fieldId: fid, operator: 'isEmpty', value: null }] }); for (const r of unpackRows(d, c.src.packCols)) if (r[fid] === null || r[fid] === undefined) out.push(r); } catch (e) { if (isCancel(e)) throw e; dlog('chunk.empty.error', String(e && e.message || e)); } }
   prog(); return { rows: out, capped, n };
 }
-async function refreshLive0(c, quiet) {
+async function refreshLive0(c, quiet, tok, key) {
+  tok = tok || { stop: false }; const chk = () => { if (tok.stop) throw new Error(CANCEL); };
   S.liveBusy = true; if (!quiet) { S.loading = true; S.loadCount = 0; render(); }
   try {
     const sc = c.__dc || {}, tk = sc.baseToken || c.src.dataToken || c.src.baseToken || '';
     const pg = { fieldId: c.src.packId }; if (SDK.GroupMode && SDK.GroupMode.INTEGRATED) pg.mode = SDK.GroupMode.INTEGRATED;
     const range0 = Object.assign({}, sc.dataRange || { type: (SDK.SourceType && SDK.SourceType.ALL) || 'ALL' }); delete range0.filterInfo;
-    const cond = (fi) => Object.assign({ tableId: sc.tableId || c.src.tableId, dataRange: fi ? Object.assign({}, range0, { filterInfo: fi }) : range0, groups: [pg], series: 'COUNTA' }, tk ? { baseToken: tk } : {});
+    const cond0 = (fi) => Object.assign({ tableId: sc.tableId || c.src.tableId, dataRange: fi ? Object.assign({}, range0, { filterInfo: fi }) : range0, groups: [pg], series: 'COUNTA' }, tk ? { baseToken: tk } : {});
+    const cond = (fi) => { chk(); return cond0(fi); }; // mỗi lần hỏi Lark đều kiểm tra đã bị hủy chưa
     const fi = serverFilter(quiet && S.ran ? S.fvRun : S.fv); let data = null, how = '';
     const good = (d) => rows0(d) > 0 && !ungrouped(d);
     // 1) có lọc ngày: hỏi Lark đã lọc sẵn
@@ -2000,11 +2052,12 @@ async function refreshLive0(c, quiet) {
       for (const [lb, fn] of tries) { try { const alt = await withTimeout(fn(), 20000); dlog('live.try', lb + ' → ' + rows0(alt)); if (good(alt)) { data = alt; how = lb; break; } } catch (e) { dlog('live.try', lb + ' lỗi: ' + String(e && e.message || e)); } }
     }
     // Chạm giới hạn → chia nhỏ theo ngày, lấy lần lượt từng đợt rồi ghép lại (người xem chỉ thấy "đang lấy dữ liệu")
-    let chunked = null;
-    if (data && rows0(data) >= LARK_CAP - 1 && !ungrouped(data)) { try { chunked = await fetchChunked(c, cond, quiet); } catch (e) { dlog('chunk.error', String(e && e.message || e)); } }
+    chk(); let chunked = null;
+    if (data && rows0(data) >= LARK_CAP - 1 && !ungrouped(data)) { try { chunked = await fetchChunked(c, cond, quiet); } catch (e) { if (isCancel(e)) throw e; dlog('chunk.error', String(e && e.message || e)); } }
+    chk();
     if (chunked) {
       S.capped = chunked.capped; S.fetchHow = 'chia ' + chunked.n + ' đợt'; S.fetchFi = 'chunk';
-      S.rows = computeCalcs(chunked.rows); S.rowsAt = Date.now(); S.liveAt = Date.now(); setStatus('ok', 'Đã cập nhật ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
+      S.rows = computeCalcs(chunked.rows); S.rowsAt = Date.now(); S.fromCache = 0; LC.set('live|' + key, { at: S.rowsAt, rows: chunked.rows, capped: chunked.capped }); S.liveAt = Date.now(); setStatus('ok', 'Đã cập nhật ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
       dlog('chunk.done', `${chunked.n} đợt · ${chunked.rows.length} dòng${chunked.capped ? ' · vẫn có ngày vượt giới hạn' : ''}`); return;
     }
     if (data && ungrouped(data) && rows0(data) > 0) throw new Error('Lark chỉ trả tổng số thay vì từng dòng: khối chưa được nhóm theo cột gói. Người sửa khối hãy mở Sửa khối → Kiểm tra → Lưu khối.');
@@ -2012,14 +2065,14 @@ async function refreshLive0(c, quiet) {
     if (rows.missing.length) throw new Error('Cột gói thiếu dữ liệu của: ' + rows.missing.map((f) => f.name).join(', ') + '. Mở Sửa khối → Tạo / cập nhật cột gói → Lưu khối.');
     S.capped = rows0(data) >= LARK_CAP - 1; S.fetchHow = how; S.fetchFi = fi && how === 'lọc trên Lark' ? JSON.stringify(fi) : '';
     if (S.capped) dlog('live.cap', `Lark trả ${rows0(data)} nhóm (chạm giới hạn) · ${how}`);
-    S.rows = computeCalcs(rows); S.rowsAt = Date.now(); S.liveAt = Date.now(); setStatus('ok', 'Đã cập nhật ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
-  } finally { S.liveBusy = false; S.loading = false; if (quiet && S.ran) render(); }
+    S.rows = computeCalcs(rows); S.rowsAt = Date.now(); S.liveAt = Date.now(); S.fromCache = 0; if (rows.length) LC.set('live|' + key, { at: S.rowsAt, rows: [...rows], capped: S.capped }); setStatus('ok', 'Đã cập nhật ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
+  } finally { if (!tok.stop) { S.liveBusy = false; S.loading = false; if (quiet && S.ran) render(); } }
 }
 function startLive(c) {
   S.liveCfg = c; if (S.liveHooked) return; S.liveHooked = true;
-  const go = () => { if (S.ran && !S.loading) refreshLive(S.liveCfg, true).catch((e) => dlog('refresh.error', String(e && e.message || e))); };
+  const go = () => { if (S.ran && !S.loading && !S.running) refreshLive(S.liveCfg, true).catch((e) => dlog('refresh.error', String(e && e.message || e))); };
   try { dashboard.onDataChange(() => setTimeout(go, 800)); } catch (e) {}
-  setInterval(() => { if (document.visibilityState !== 'hidden') go(); }, 120000);
+  setInterval(() => { if (document.visibilityState !== 'hidden' && S.fetchFi !== 'chunk') go(); }, 120000);
 }
 function showErr(e) { const m = String(e && e.message || e); setStatus('err', 'Chưa đọc được dữ liệu'); S.loading = false; $('sheet').innerHTML = `<div class="empty"><p class="msg err" style="display:inline-block;max-width:640px;text-align:left">${esc(m)}</p></div>`; dlog('error', m); }
 async function bootView() {
