@@ -355,7 +355,7 @@ body.dashview .top{display:none}
       <label class="lbl">View (lọc sẵn của Lark)<select id="selView"></select></label>
       <div id="packBox" hidden style="display:flex;flex-direction:column;gap:6px">
         <label class="lbl">Cột gói dữ liệu<select id="selPack" title="Cột công thức gom các cột báo cáo dùng, để khối luôn lấy được dữ liệu mới"></select></label>
-        <div class="row"><button id="btnPack" title="Không bắt buộc: Lưu khối sẽ tự làm việc này">Cập nhật cột gói ngay</button><button id="btnPackTest" class="fit">Kiểm tra</button></div>
+        <div class="row"><button id="btnPack" title="Thử tự cập nhật; nếu Lark chặn sẽ hiện công thức để dán tay">Cập nhật cột gói</button><button id="btnPackTest" class="fit">Kiểm tra</button></div>
         <p class="hint" id="packHint"></p>
       </div>
     </div>
@@ -417,7 +417,7 @@ body.dashview .top{display:none}
 const SDK_URL = 'https://esm.sh/@lark-base-open/js-sdk@1.0.2';
 const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
 const PACK_SEP = '‖', PACK_TAG = '§', PACK_NAME = 'Gói dữ liệu báo cáo';
-const BLOCK_MAX = 12000, VER = '1.9', VIEW_CAP = Infinity, CACHE_MS = 60000;
+const BLOCK_MAX = 12000, VER = '1.10', VIEW_CAP = Infinity, CACHE_MS = 60000;
 let SDK = null, bitable = null, dashboard = null, workspace = null, FieldType = null;
 const FT = (k, d) => (FieldType && FieldType[k] !== undefined ? FieldType[k] : d);
 
@@ -1876,9 +1876,9 @@ $('selPack').onchange = () => { S.cfg.src.packId = $('selPack').value; S.cfg.src
 function packStale() { const sig = new Set(S.cfg.src.packSig || []); return packNeeded().map((f) => f.id).filter((id) => !sig.has(id)); }
 function packHint() {
   if (!isEdit()) return; const el = $('packHint');
-  if (!S.cfg.src.packId) { el.textContent = 'Chưa có cột gói — Lưu khối sẽ tự tạo.'; el.style.color = 'var(--muted)'; return; }
+  if (!S.cfg.src.packId) { el.textContent = 'Chưa có cột gói — Lưu khối sẽ thử tự tạo, nếu không được sẽ hướng dẫn dán công thức.'; el.style.color = 'var(--muted)'; return; }
   const st = packStale();
-  if (st.length) { el.style.color = 'var(--muted)'; el.textContent = `Cột gói thiếu ${st.length} cột — Lưu khối sẽ tự cập nhật.`; el.title = st.map(fName).join(', '); }
+  if (st.length) { el.style.color = 'var(--muted)'; el.textContent = `Cột gói thiếu ${st.length} cột — bấm Lưu khối để cập nhật.`; el.title = st.map(fName).join(', '); }
   else { el.textContent = `✓ Cột gói đủ ${packNeeded().length} cột.`; el.style.color = 'var(--ok)'; }
 }
 // Tạo / cập nhật cột gói (không hiện hộp thoại) — Lưu khối gọi hàm này tự động
@@ -1890,33 +1890,53 @@ async function packIdsNow(fid) {
   return ids;
 }
 async function ensurePack() {
-  let cols = packNeeded(), formula = packFormula(cols); let done = false, err = '';
+  let cols = packNeeded(), formula = packFormula(cols); let done = false, err = '', fid = '';
   if (!S.table) return { done, err: 'chưa chọn bảng', cols, formula }; if (!cols.length) return { done, err: 'báo cáo chưa dùng cột nào', cols, formula };
   try {
-    let fid = $('selPack').value || (S.metas.find((m) => m.name === PACK_NAME) || {}).id;
-    if (!fid) { const r = await withTimeout(S.table.addField({ type: FT('Formula', 20), name: PACK_NAME }), 15000); fid = typeof r === 'string' ? r : (r && (r.fieldId || r.id)); }
-    else { // giữ lại cột mà báo cáo khác trên cùng bảng đang dùng
+    fid = $('selPack').value || S.cfg.src.packId || (S.metas.find((m) => m.name === PACK_NAME) || {}).id;
+    if (fid) { // giữ lại cột mà báo cáo khác trên cùng bảng đang dùng
       const old = await packIdsNow(fid), need = new Set(cols.map((c) => c.id)), keep = [...old].filter((id) => !need.has(id) && S.fIdx.has(id) && !S.fIdx.get(id).calc).map((id) => S.fIdx.get(id));
       if (keep.length) { cols = cols.concat(keep); formula = packFormula(cols); dlog('pack.keep', keep.map((f) => f.name)); }
     }
+    if (!fid) { const r = await withTimeout(S.table.addField({ type: FT('Formula', 20), name: PACK_NAME }), 15000); fid = typeof r === 'string' ? r : (r && (r.fieldId || r.id)); }
     const f = await withTimeout(S.table.getFieldById(fid), 8000);
     if (!f || !f.setFormula) throw new Error('SDK không hỗ trợ đặt công thức tự động');
     await withTimeout(f.setFormula(formula), 15000);
     S.metas = (await withTimeout(S.table.getFieldMetaList(), 15000)) || S.metas;
     S.cfg.src.packId = fid; S.cfg.src.packSig = cols.map((c) => c.id); fillPackSelect(); done = true;
-  } catch (e) { err = String(e && e.message || e); dlog('pack.create.error', err); }
+  } catch (e) { err = String(e && e.message || e); dlog('pack.create.error', err); if (fid && !S.cfg.src.packId) { try { S.metas = (await withTimeout(S.table.getFieldMetaList(), 15000)) || S.metas; } catch (x) {} S.cfg.src.packId = fid; fillPackSelect(); } } // cột đã tạo nhưng chưa đặt được công thức → dán vào chính cột đó
   let check = null; if (done) { await sleep(1500); check = await previewPack(true); if (!(check && check.ok)) { await sleep(2500); check = await previewPack(true); } } // công thức mới cần vài giây để Lark tính
   return { done, err, cols, formula, check };
 }
 async function makePack() {
   if (!S.table) return toast('Chưa chọn bảng.'); if (!packNeeded().length) return toast('Báo cáo chưa dùng cột nào.');
-  toast('Đang tạo / cập nhật cột gói…', 8000);
-  const { done, err, cols, formula, check } = await ensurePack();
-  openModal('Cột gói dữ liệu cho khối',
-    (done ? `<p class="msg ${check && check.ok ? 'ok' : 'warn'}">Đã tạo / cập nhật cột <b>${esc(PACK_NAME)}</b>. ${esc(check ? check.msg : '')}</p>`
-      : `<p class="msg warn">Không tự tạo được cột (${esc(err)}). Làm thủ công: trong bảng <b>${esc(S.tableMeta.name)}</b> thêm cột kiểu <b>Công thức</b> tên <b>${esc(PACK_NAME)}</b>, dán công thức dưới đây, rồi chọn cột đó ở ô "Cột gói".</p>`)
-    + `<p class="hint">Công thức gói ${cols.length} cột:</p><pre>${esc(formula)}</pre>`,
-    [['Sao chép công thức', async () => { toast((await copyText(formula)) ? 'Đã chép công thức.' : 'Không chép được, hãy bôi đen và Ctrl+C.'); }]]);
+  toast('Đang thử tự cập nhật cột gói…', 8000);
+  const r = await ensurePack();
+  if (r.done) return openModal('Cột gói dữ liệu cho khối', `<p class="msg ${r.check && r.check.ok ? 'ok' : 'warn'}">Đã tự cập nhật cột gói. ${esc(r.check ? r.check.msg : '')}</p>`);
+  return showManualPack(r, false);
+}
+// Lark không cho extension sửa công thức (thường gặp khi Sửa khối) → hướng dẫn dán tay, kèm công thức và danh sách cột thiếu
+async function showManualPack(r, fromSave) {
+  const sel = S.cfg.src.packId, selName = sel ? fName(sel) : '';
+  let have = new Set(); if (sel) have = await packIdsNow(sel).catch(() => new Set());
+  const missing = packNeeded().filter((f) => !have.has(f.id));
+  openModal('Cần dán công thức cột gói',
+    `<p class="msg warn">Lark không cho extension tự sửa công thức cột${r && r.err ? ` (${esc(r.err)})` : ''}. Hãy dán công thức thủ công — mỗi bảng chỉ cần làm lại khi báo cáo dùng thêm cột mới.</p>`
+    + `<ol class="hint" style="margin:6px 0 8px 18px;padding:0">`
+    + (sel ? `<li>Trong bảng <b>${esc(S.tableMeta.name)}</b>, mở cài đặt cột <b>${esc(selName)}</b> → thay toàn bộ công thức bằng công thức dưới đây.</li>`
+           : `<li>Trong bảng <b>${esc(S.tableMeta.name)}</b>, thêm cột kiểu <b>Công thức</b> (đặt tên tùy ý, ví dụ "${esc(PACK_NAME)}") và dán công thức dưới đây.</li>`)
+    + `<li>Quay lại đây bấm <b>Đã dán xong — Lưu khối</b>. Extension tự tìm cột vừa dán, kiểm tra đủ cột rồi lưu.</li></ol>`
+    + (missing.length ? `<p class="hint">Cột gói đang thiếu <b>${missing.length}</b> cột: ${missing.map((f) => esc(f.name)).join(', ')}</p>` : '')
+    + `<p class="hint">Công thức gói ${r.cols.length} cột:</p><pre>${esc(r.formula)}</pre>`,
+    [['Sao chép công thức', async () => { toast((await copyText(r.formula)) ? 'Đã chép công thức.' : 'Không chép được, hãy bôi đen và Ctrl+C.'); }, 'primary'], ['Đã dán xong — Lưu khối', () => { closeModal(); saveDash(); }]]);
+}
+// Tìm cột gói người dùng vừa dán: cột đang chọn trước, rồi tới các cột công thức khác có dữ liệu dạng gói
+async function findPack() {
+  try { S.metas = (await withTimeout(S.table.getFieldMetaList(), 15000)) || S.metas; } catch (e) {}
+  const forms = S.metas.filter((m) => m.type === FT('Formula', 20)), cur = S.cfg.src.packId;
+  const order = [...forms.filter((m) => m.id === cur), ...forms.filter((m) => m.id !== cur && m.name === PACK_NAME), ...forms.filter((m) => m.id !== cur && m.name !== PACK_NAME)].slice(0, 10);
+  for (const m of order) { S.cfg.src.packId = m.id; const ck = await previewPack(true).catch(() => null); if (ck && ck.ok) { fillPackSelect(); $('selPack').value = m.id; S.cfg.src.packId = m.id; packHint(); dlog('pack.found', m.name); return m.id; } }
+  S.cfg.src.packId = cur; packHint(); return null;
 }
 async function previewPack(silent) {
   const packId = S.cfg.src.packId; if (!packId) { if (!silent) toast('Chưa chọn cột gói.'); return null; }
@@ -1957,10 +1977,11 @@ async function saveDash() {
   // cột gói: tự tạo / cập nhật khi thiếu cột, người thiết kế không phải bấm riêng
   let packOk = !!S.cfg.src.packId && !packStale().length;
   if (S.cfg.src.packId && !packOk) { step('Kiểm tra cột gói…'); const ck = await previewPack(true).catch(() => null); packOk = !!(ck && ck.ok); }
+  if (!packOk) { step('Tìm cột gói đã có trong bảng…'); packOk = !!(await findPack()); }
   if (!packOk) {
-    step('Tự tạo / cập nhật cột gói (' + packNeeded().length + ' cột)…'); const r = await ensurePack().catch((e) => ({ done: false, err: String(e && e.message || e) }));
+    step('Thử tự cập nhật cột gói (' + packNeeded().length + ' cột)…'); const r = await ensurePack().catch((e) => ({ done: false, err: String(e && e.message || e), cols: packNeeded(), formula: packFormula(packNeeded()) }));
     packOk = !!(r.done && r.check && r.check.ok); dlog('save.autopack', { done: r.done, ok: packOk, err: r.err || '' });
-    if (!packOk) { btn.disabled = false; S.saving = false; $('mClose').hidden = false; closeModal(); if (!r.done) return makePack(); return flagFix($('btnPack'), 'Đã cập nhật cột gói nhưng Lark chưa tính xong — đợi vài giây rồi bấm Lưu khối lại.'); }
+    if (!packOk) { btn.disabled = false; S.saving = false; $('mClose').hidden = false; closeModal(); if (!r.done) return showManualPack(r, true); return flagFix($('btnPack'), 'Đã cập nhật cột gói nhưng Lark chưa tính xong — đợi vài giây rồi bấm Lưu khối lại.'); }
   }
   const packId = S.cfg.src.packId;
   try {
