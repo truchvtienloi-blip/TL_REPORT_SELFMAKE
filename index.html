@@ -1135,7 +1135,8 @@ function ctxMenu(x, y, items) {
 function closeCtx() { document.querySelectorAll('.menu.ctx').forEach((m) => m.remove()); }
 document.addEventListener('mousedown', (e) => { if (!e.target.closest('.menu.ctx')) closeCtx(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCtx(); });
-document.addEventListener('scroll', closeCtx, true);
+// Chỉ đóng menu khi cuộn trang/bảng bên ngoài — cuộn trong chính danh sách menu thì giữ nguyên
+document.addEventListener('scroll', (e) => { const t = e.target; if (t && t.nodeType === 1 && t.closest && t.closest('.menu.ctx')) return; closeCtx(); }, true);
 // Áp thay đổi: ở tab Thiết kế lưu vào mẫu; ở tab Xem chỉ áp tạm cho phiên xem
 function apply(fn, full) { const lay = VL(); fn(lay); if (S.tab === 'design') changed(full); else { S.open = {}; render(); } }
 const AGGS = [['', 'Không tính'], ['sum', 'Tổng (Σ)'], ['cnt', 'Đếm số dòng có giá trị'], ['cntd', 'Đếm giá trị khác nhau'], ['avg', 'Trung bình'], ['min', 'Nhỏ nhất'], ['max', 'Lớn nhất']];
