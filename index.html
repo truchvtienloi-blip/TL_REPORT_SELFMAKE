@@ -249,6 +249,14 @@ body.sidehid .shead{flex-direction:column-reverse;justify-content:flex-end;heigh
 body.sidehid #sTitle{writing-mode:vertical-rl;transform:rotate(180deg);flex:0 0 auto;font-weight:600;color:#444}
 body.sidehid #fvReset{display:none}
 body.dashview .top{display:none}
+.rpt .rfoot{position:relative}
+.rpt .fbar{position:absolute;right:0;top:-26px;display:none;gap:3px;font:12px "Segoe UI",Tahoma,sans-serif;font-style:normal;font-weight:400}
+.rpt.design .rfoot:hover .fbar,.rpt.design .rfoot:focus-within .fbar{display:inline-flex}
+.rpt .fbar button{padding:1px 7px;font-size:11.5px;height:22px;display:inline-flex;align-items:center;gap:3px}
+.rpt.design .rfoot:hover{box-shadow:0 0 0 1px #b9cbe6}
+.rpt.design .rfoot [contenteditable]:empty::before{content:'…';color:#b0b6bf}
+/* Nút Báo cáo nằm ngay dưới các ô lọc, không bị đẩy xuống đáy thanh bên */
+#pView{flex:0 0 auto}#pView .fbody{flex:0 0 auto;overflow:visible;padding-bottom:4px}#pView .ffoot{border-top:0;background:transparent;padding-top:4px}
 </style>
 <style id="pageCss"></style>
 </head>
@@ -384,9 +392,6 @@ body.dashview .top{display:none}
   </div>
   <label class="chk"><input type="checkbox" id="lFit"> Giãn cột vừa khung khi xem / in</label>
   <label class="chk"><input type="checkbox" id="lShowF"> In điều kiện lọc dưới tiêu đề</label>
-  <label class="chk"><input type="checkbox" id="fShow"> Hiện phần ký tên cuối báo cáo</label>
-  <label class="chk"><input type="checkbox" id="fDate"> Dòng "Ngày … tháng … năm …" trên chữ ký phải</label>
-  <p class="hint">Tiêu đề, dòng phụ, chữ ký: bấm thẳng vào chữ trên báo cáo để sửa. Dòng phụ dùng được {TU_NGAY}, {DEN_NGAY}, {HOM_NAY}, {SO_DONG}.</p>
   <div class="row"><span></span><button id="gsetClose" class="fit">Xong</button></div>
 </div>
 
@@ -487,7 +492,7 @@ function defLayout(name, title) {
   return { name: name || 'Mẫu chuẩn', title: title || 'BÁO CÁO', top: [{ id: uid(), text: '{Khoảng ngày}', s: { i: true, al: 'c' } }], bottom: [], fit: true, pad: 'M', freeze: 0, font: 'Times New Roman', fs: 13, orient: 'L',
     cols: [], groups: [], sort: [], mode: 'detail', showNo: false, total: true, totalLabel: 'Tổng cộng:', gSub: true, gNum: true, gCnt: false, gUp: true, open: 9, showF: true,
     nf: 'en', dp: '', neg: 'minus', zero: 'blank', df: 'dd/mm/yyyy', grid: '#9aa0a6', zebra: false, sty: defSty(),
-    foot: { show: true, l: 'Người lập biểu', ls: '(Ký, họ tên)', c: '', cs: '', r: 'Kế toán trưởng', rs: '(Ký, họ tên)', date: true } };
+    foot: { show: false, l: 'Người lập biểu', ls: '(Ký, họ tên)', c: '', cs: '', r: 'Kế toán trưởng', rs: '(Ký, họ tên)', date: true, dt: 'Ngày ..... tháng ..... năm .......' } };
 }
 function defCfg() { return { v: 3, calcs: [], src: { tableId: '', tableName: '', viewId: '', baseToken: '', packId: '', packSig: [], packCols: [] }, filters: [], layouts: [defLayout()], cur: 0 }; }
 const COLDEF = { f: '', h: '', g: '', w: 120, al: '', fmt: '', dp: '', agg: '', mg: false, wrap: false, s: {} };
@@ -913,11 +918,13 @@ function reportHTML(lay, rows, mode, fv, availW) {
   }
   h += `</table>`;
   h += `<div class="rbot" style="width:${tw}px">${linesHTML(lay, 'bottom', rows, fv, design)}</div>`;
+  // Phần ký tên: tùy chọn, mọi chữ sửa được ngay trên mẫu; ô để trống thì không in
   const F = lay.foot;
   if (F.show) {
-    const slot = (k, ks, date) => `<div>${date ? `<span class="rd">Ngày ..... tháng ..... năm .......</span>` : ''}<b${ed('foot.' + k)}>${esc(F[k])}</b><i${ed('foot.' + ks)}>${esc(F[ks])}</i></div>`;
-    h += `<div class="rfoot${sel('foot')}" data-tg="foot" style="width:${tw}px;${css(sty.foot)}">${slot('l', 'ls')}${slot('c', 'cs')}${slot('r', 'rs', F.date)}</div>`;
-  }
+    const slot = (k, ks, date) => (design || F[k] || F[ks] || date ? `<div>${date ? `<span class="rd"${ed('foot.dt')}>${esc(F.dt ?? 'Ngày ..... tháng ..... năm .......')}</span>` : ''}<b${ed('foot.' + k)}>${esc(F[k])}</b><i${ed('foot.' + ks)}>${esc(F[ks])}</i></div>` : '<div></div>');
+    const bar = design ? `<span class="fbar" contenteditable="false"><button data-fa="date" aria-pressed="${F.date ? 'true' : 'false'}" title="Bật / tắt dòng ngày tháng trên chữ ký bên phải">Dòng ngày</button><button data-fa="del" title="Xóa phần ký tên">${svg('x')} Xóa phần ký tên</button></span>` : '';
+    h += `<div class="rfoot${sel('foot')}" data-tg="foot" style="width:${tw}px;${css(sty.foot)}">${bar}${slot('l', 'ls')}${slot('c', 'cs')}${slot('r', 'rs', F.date)}</div>`;
+  } else if (design) h += `<button class="laddbtn" data-fa="add" style="margin-top:10px">+ Thêm phần ký tên</button>`;
   return h + `</div>`;
 }
 
@@ -1050,10 +1057,14 @@ sheet.addEventListener('click', (e) => {
   const la = e.target.closest('[data-la]');
   if (la) { const line = la.closest('.rline'), [pos, id] = line.dataset.line.split(':'); if (la.dataset.la === 'del') { L()[pos] = L()[pos].filter((x) => x.id !== id); if (S.tgtLine === id) S.tgt = 'title'; changed(); } else { const r = la.getBoundingClientRect(); tokenMenu(r.left, r.bottom + 4, line); } return; }
   const ladd = e.target.closest('[data-ladd]'); if (ladd) { addLine(ladd.dataset.ladd); return; }
+  const fa = e.target.closest('[data-fa]'); if (fa) { const F = L().foot; if (fa.dataset.fa === 'add') F.show = true; else if (fa.dataset.fa === 'del') { F.show = false; if (S.tgt === 'foot') S.tgt = 'title'; } else F.date = !F.date; changed(); return; }
   const line = e.target.closest('.rline'); if (line) { const id = line.dataset.line.split(':')[1]; if (S.tgt !== 'line' || S.tgtLine !== id) { S.tgt = 'line'; S.tgtLine = id; line.classList.add('tsel'); sheet.querySelectorAll('.tsel').forEach((x) => x !== line && x.classList.remove('tsel')); syncRibbon(); } return; }
   const cell = e.target.closest('th[data-ci],td[data-ci]');
   if (cell && !e.target.classList.contains('grip')) { const ci = +cell.dataset.ci; if (e.shiftKey && S.tgt === 'col' && S.selCol >= 0) { S.selRange = [Math.min(S.selCol, ci), Math.max(S.selCol, ci)]; render(); return; } S.selRange = null; selectTgt('col', ci); return; } // Shift + bấm: chọn nhiều cột liền nhau
-  const tg = e.target.closest('[data-tg]'); if (tg) selectTgt(tg.dataset.tg);
+  const tg = e.target.closest('[data-tg]'); if (!tg) return;
+  // Bấm vào chữ sửa được (tiêu đề, chữ ký…): chỉ đổi vùng chọn, không vẽ lại để giữ con trỏ gõ
+  if (e.target.closest('[contenteditable="true"]')) { if (S.tgt !== tg.dataset.tg) { S.tgt = tg.dataset.tg; S.selRange = null; sheet.querySelectorAll('.tsel,.sel').forEach((x) => x.classList.remove('tsel', 'sel')); tg.classList.add('tsel'); syncRibbon(); } return; }
+  selectTgt(tg.dataset.tg);
 });
 // Bấm đúp tiêu đề cột (thiết kế) → đổi tên ngay trên mẫu
 sheet.addEventListener('dblclick', (e) => {
@@ -1258,7 +1269,7 @@ $('rOrient').onchange = () => { L().orient = $('rOrient').value; changed(); };
 $('rGrid').oninput = () => { L().grid = $('rGrid').value; render(); }; $('rGrid').onchange = () => changed();
 $('rZebra').onclick = () => { L().zebra = !L().zebra; changed(); };
 // Thiết lập chung (bảng nhỏ)
-const GBIND = [['lNf', 'nf'], ['lDp', 'dp'], ['lNeg', 'neg'], ['lZero', 'zero'], ['lDf', 'df'], ['lFs', 'fs', 'n'], ['lShowF', 'showF', 'c'], ['fShow', 'foot.show', 'c'], ['lFit', 'fit', 'c'], ['fDate', 'foot.date', 'c']];
+const GBIND = [['lNf', 'nf'], ['lDp', 'dp'], ['lNeg', 'neg'], ['lZero', 'zero'], ['lDf', 'df'], ['lFs', 'fs', 'n'], ['lShowF', 'showF', 'c'], ['lFit', 'fit', 'c']];
 const getP = (o, p) => p.split('.').reduce((a, k) => (a ? a[k] : undefined), o);
 const setP = (o, p, v) => { const ks = p.split('.'); const last = ks.pop(); ks.reduce((a, k) => a[k], o)[last] = v; };
 function syncGset() { for (const [id, p, t] of GBIND) { const v = getP(L(), p); if (t === 'c') $(id).checked = !!v; else $(id).value = v ?? ''; } }
@@ -1508,7 +1519,7 @@ async function exportXlsx() {
   if (F.show) {
     push(Array(nC).fill(''), Array(nC).fill({})); const third = Math.max(1, Math.floor(nC / 3)), pos = [0, third, Math.max(third, nC - third)];
     const mk = (vals, s) => { const arr = Array(nC).fill(''); vals.forEach((v, i) => (arr[pos[i]] = v)); const r = push(arr, Array(nC).fill({ font: xFont(font, s), alignment: { horizontal: 'center' } })); pos.forEach((p, i) => { const e = i === 2 ? nC - 1 : Math.min(nC - 1, p + third - 1); if (e > p) merges.push({ s: { r, c: p }, e: { r, c: e } }); }); };
-    if (F.date) mk(['', '', 'Ngày ..... tháng ..... năm .......'], { i: true });
+    if (F.date) mk(['', '', F.dt ?? 'Ngày ..... tháng ..... năm .......'], { i: true });
     mk([F.l, F.c, F.r], { ...sty.foot, b: true }); mk([F.ls, F.cs, F.rs], { ...sty.foot, i: true });
   }
   const ws = X.utils.aoa_to_sheet(aoa.map((r) => r.map((v) => (v && typeof v === 'object' ? v.v : v))));
