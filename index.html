@@ -353,11 +353,6 @@ body.dashview .top{display:none}
       <label class="lbl" id="rowBase" hidden>Base<select id="selBase"></select></label>
       <label class="lbl">Bảng<select id="selTable" disabled></select></label>
       <label class="lbl">View (lọc sẵn của Lark)<select id="selView"></select></label>
-      <div id="packBox" hidden style="display:flex;flex-direction:column;gap:6px">
-        <label class="lbl">Cột gói dữ liệu<select id="selPack" title="Cột công thức gom các cột báo cáo dùng, để khối luôn lấy được dữ liệu mới"></select></label>
-        <div class="row"><button id="btnPack" title="Không bắt buộc: Lưu khối sẽ tự làm việc này">Cập nhật cột gói ngay</button><button id="btnPackTest" class="fit">Kiểm tra</button></div>
-        <p class="hint" id="packHint"></p>
-      </div>
     </div>
     <div class="sec" id="secCols"><h3>2 · Cột hiển thị <span class="cnt" id="colCnt"></span></h3>
       <div class="row"><input type="search" id="fSearch" placeholder="Tìm cột…" aria-label="Tìm cột"><button id="fAll" class="fit" style="font-size:12px">Chọn hết</button><button id="fNone" class="fit" style="font-size:12px">Bỏ hết</button></div>
@@ -417,7 +412,7 @@ body.dashview .top{display:none}
 const SDK_URL = 'https://esm.sh/@lark-base-open/js-sdk@1.0.2';
 const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
 const PACK_SEP = '‖', PACK_TAG = '§', PACK_NAME = 'Gói dữ liệu báo cáo';
-const BLOCK_MAX = 12000, VER = '1.8.2', VIEW_CAP = Infinity, CACHE_MS = 60000;
+const BLOCK_MAX = 12000, VER = '2.0', VIEW_CAP = Infinity, CACHE_MS = 10 * 60000;
 let SDK = null, bitable = null, dashboard = null, workspace = null, FieldType = null;
 const FT = (k, d) => (FieldType && FieldType[k] !== undefined ? FieldType[k] : d);
 
@@ -863,8 +858,6 @@ function reportHTML(lay, rows, mode, fv, availW) {
   let h = `<div class="rpt ${design ? 'design' : 'view'}" style="font-family:'${esc(lay.font)}',serif;font-size:${fs}px;--grid:${lay.grid};--pad:${PADS[lay.pad] || 3}px">`;
   h += `<div class="rh"><div class="rt${sel('title')}" data-tg="title" style="${css(sty.title)}"${ed('title')}>${esc(lay.title)}</div>`;
   h += linesHTML(lay, 'top', rows, fv, design);
-  if (!design && mode === 'view' && S.ran && !S.loading && S.capped) h += `<div class="capw">Lark chỉ trả tối đa ${LARK_CAP.toLocaleString('vi-VN')} nhóm dữ liệu mỗi lần lấy — kết quả có thể chưa đủ. Hãy thu hẹp khoảng ngày${S.fetchFi ? '' : ' (lọc ngày chỉ gửi lên Lark được với cột Ngày gốc của Lark)'}.</div>`;
-  if (!design && mode === 'view' && S.ran && !S.loading && S.fetchFi === 'direct') h += `<div class="capw">Khối không đọc được cột gói nên dữ liệu được đọc thẳng từ bảng theo quyền của tài khoản bạn. Nếu bạn chỉ được xem một phần dòng, báo cáo sẽ thiếu. Nhờ người quản trị cấp quyền xem cột "${esc(PACK_NAME)}" cho vai trò của bạn.</div>`;
   if (lay.showF && !design) for (const t of filterLines(fv)) h += `<div class="rfl">${esc(t)}</div>`;
   h += `</div>`;
   if (!ci.length) return h + `<div class="empty">${design ? 'Chưa có cột nào. Tick cột ở mục <b>2 · Cột hiển thị</b> bên trái.' : 'Báo cáo chưa có cột.'}</div></div>`;
@@ -1378,7 +1371,7 @@ function syncDesignUI() { renderColList(); renderFilters(); }
 let dirty = false;
 function changed(full) {
   dirty = true; if (full) syncDesignUI();
-  render(); packHint();
+  render();
   if (!S.dash) autosave(); else if (isEdit()) setStatus('wait', 'Có thay đổi chưa lưu khối');
 }
 const autosave = debounce(async () => { if (!S.cfg.src.tableId) return; await stoSet('rs-cfg:' + S.cfg.src.tableId, S.cfg); setStatus('ok', 'Đã lưu thiết kế ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })); dirty = false; }, 900);
@@ -1496,7 +1489,7 @@ async function runReport(force) {
     if (my !== runSeq) return;
     if (!S.rows.length && got !== 'cache') { dlog('run.empty', 'Lark chưa trả dòng nào — thử lại'); S.loading = true; render(); await sleep(1500); if (my !== runSeq) return; await ensureData(true); } // lần đầu Lark hay trả rỗng
     if (my !== runSeq) return;
-    S.fvRun = clone(S.fv); S.ran = true; S.pend = false; S.cap = VIEW_CAP; S.open = {}; S.loading = false; S.running = false; setRunBtn(false); render(); renderViewFilters(); saveRunState(); if (isView()) startLive(S.cfg);
+    S.fvRun = clone(S.fv); S.ran = true; S.pend = false; S.cap = VIEW_CAP; S.open = {}; S.loading = false; S.running = false; setRunBtn(false); render(); renderViewFilters(); saveRunState();
     if (got === 'cache') bgRefresh(my); // đã hiện dữ liệu lưu trên máy → cập nhật mới từ Lark ở nền
   } catch (e) { if (my !== runSeq || isCancel(e)) return; S.loading = false; showErr(e); }
   finally { if (my === runSeq) { S.running = false; setRunBtn(false); S.loading = false; } }
@@ -1509,13 +1502,13 @@ function bgRefresh(my) {
     .catch((e) => { if (!isCancel(e)) dlog('cache.refresh.error', String(e && e.message || e)); })
     .finally(() => { S.bgBusy = false; if (my === runSeq) render(); });
 }
-const liveKey = (fv) => { const c = S.cfg || {}, src = c.src || {}; const fi = serverFilter(fv); return [src.tableId, src.packId, src.packSig || '', fi ? JSON.stringify(fi) : ''].join('|'); };
+const liveKey = () => { const src = (S.cfg || {}).src || {}; return ['d', src.baseToken || '', src.tableId, src.viewId || ''].join('|'); };
 async function ensureData(force) {
-  const key = isView() ? 'live|' + liveKey(S.fv) : (S.cfg.src.tableId + '|' + (S.cfg.src.viewId || ''));
-  if (!force && S.rows.length && S.rowsKey === key && !S.capped && Date.now() - S.rowsAt < CACHE_MS) return 'mem';
+  const key = isView() ? 'live|' + liveKey() : (S.cfg.src.tableId + '|' + (S.cfg.src.viewId || ''));
+  if (!force && S.rows.length && S.rowsKey === key && Date.now() - S.rowsAt < CACHE_MS) return 'mem'; // đã đọc cả bảng gần đây → đổi điều kiện lọc không cần đọc lại
   if (isView() && !force) { // dữ liệu lần trước cùng điều kiện, lưu trên máy người dùng → hiện ngay
     const hit = await LC.get(key);
-    if (hit && hit.rows && hit.rows.length) { S.rows = computeCalcs(hit.rows); S.rowsAt = hit.at; S.liveAt = hit.at; S.capped = !!hit.capped; S.fetchHow = 'bộ nhớ máy'; S.fromCache = hit.at; S.rowsKey = key; dlog('cache.hit', hit.rows.length + ' dòng · lưu lúc ' + new Date(hit.at).toLocaleString('vi-VN')); return 'cache'; }
+    if (hit && hit.rows && hit.rows.length) { S.rows = computeCalcs(hit.rows); S.rowsAt = hit.at; S.liveAt = hit.at; S.fetchHow = 'bộ nhớ máy'; S.fromCache = hit.at; S.rowsKey = key; dlog('cache.hit', hit.rows.length + ' dòng · lưu lúc ' + new Date(hit.at).toLocaleString('vi-VN')); return Date.now() - hit.at < CACHE_MS ? 'mem' : 'cache'; }
   }
   if (isView()) await refreshLive(S.cfg, false); else await loadRecords();
   S.rowsKey = key; S.fromCache = 0; return 'live';
@@ -1760,7 +1753,7 @@ async function openTable(tid, keepCfg) {
     const df = S.fields.find((f) => f.k === 'date'); if (df && !S.cfg.filters.length) S.cfg.filters.push({ id: uid(), f: df.id, kind: 'date', label: '', def: 'month' });
   }
   fillSelect($('selView'), S.views, 'Tất cả bản ghi'); $('selView').value = S.cfg.src.viewId || '';
-  $('selTable').value = tid; fillPackSelect();
+  $('selTable').value = tid;
   initFv(); S.open = {}; S.selCol = -1; S.tgt = 'title'; S.rows = []; S.ran = false; S.rowsAt = 0;
   boxMsg(''); setStatus('ok', 'Đã kết nối · ' + S.fields.length + ' cột');
   if (!S.dash) setTimeout(() => restoreRun().catch((e) => dlog('restore.error', String(e && e.message || e))), 0);
@@ -1793,7 +1786,7 @@ async function loadRecords() {
 async function detectDashboard() {
   if (!dashboard) return null;
   if (urlParam('isCreate') === '1') return 'Create'; if (urlParam('isConfig') === '1') return 'Config'; if (urlParam('isFullScreen') === '1') return 'FullScreen';
-  try { const c = await withTimeout(dashboard.getConfig(), 2500); return c && Array.isArray(c.dataConditions) ? 'View' : null; } catch (e) { return null; }
+  try { const c = await withTimeout(dashboard.getConfig(), 2500); return c && (Array.isArray(c.dataConditions) || (c.customConfig && c.customConfig.app === 'rs')) ? 'View' : null; } catch (e) { return null; }
 }
 async function packCfg(obj) {
   const s = JSON.stringify(obj); if (typeof CompressionStream === 'undefined') return { z: 0, d: s };
@@ -1839,103 +1832,7 @@ function packNeeded() {
   const dateFirst = S.cfg.filters.filter((F) => DATE_KINDS.has(F.kind)).map((F) => F.f);
   return [...new Set([...dateFirst.filter((id) => ids.has(id)), ...ids])].map((id) => S.fIdx.get(id)).filter((f) => f && !f.calc);
 }
-const packExpr = (f) => (f.k === 'date' ? `TEXT([${f.name}],"YYYY/MM/DD")` : `[${f.name}]`);
-const packFormula = (cols) => cols.map((f) => `"${PACK_TAG}${f.id}:" & ${packExpr(f)}`).join(` & "${PACK_SEP}" & `);
-function packCondition(packId, range) {
-  const g = { fieldId: packId };
-  if (SDK.GroupMode && SDK.GroupMode.INTEGRATED) g.mode = SDK.GroupMode.INTEGRATED;
-  if (SDK.DATA_SOURCE_SORT_TYPE && SDK.DATA_SOURCE_SORT_TYPE.VIEW) g.sort = { order: (SDK.ORDER && SDK.ORDER.ASCENDING) || 'ASC', sortType: SDK.DATA_SOURCE_SORT_TYPE.VIEW };
-  const cond = { tableId: S.cfg.src.tableId, dataRange: range, groups: [g], series: 'COUNTA' };
-  const tk = S.srcToken || S.selfToken; if (tk) cond.baseToken = tk; return cond;
-}
-function unpackRows(data, cols) {
-  const out = []; out.missing = []; out.tagged = true;
-  if (!Array.isArray(data) || data.length < 2) return out;
-  const seen = new Set();
-  for (const row of data.slice(1)) {
-    const cell = row && row[0]; if (!cell) continue;
-    const raw = cell.text !== undefined && cell.text !== null && cell.text !== '' ? cell.text : cell.value;
-    if (raw === null || raw === undefined || raw === '') continue;
-    const byId = new Map();
-    for (const p of String(raw).split(PACK_SEP)) { const m = p.trim().match(/^§([A-Za-z0-9_]+):([\s\S]*)$/); if (m) { byId.set(m[1], m[2]); seen.add(m[1]); } }
-    if (!byId.size) { out.tagged = false; continue; }
-    const o = {};
-    for (const f of cols) { const s = String(byId.get(f.id) ?? '').trim(); o[f.id] = f.k === 'num' ? (s === '' ? null : toNum(s)) : f.k === 'date' ? parseDate(s) : s === 'true' ? '✓' : s === 'false' ? '' : s; }
-    const cnt = row[1] && typeof row[1].value === 'number' ? row[1].value : 1;
-    for (let k = 0; k < Math.max(1, cnt); k++) out.push(k ? { ...o } : o);
-  }
-  out.missing = out.length ? cols.filter((f) => !seen.has(f.id)) : [];
-  return out;
-}
-function fillPackSelect() {
-  if (!isEdit()) return; const el = $('selPack'), forms = S.metas.filter((m) => m.type === FT('Formula', 20));
-  fillSelect(el, forms, '— Chưa có (bấm Tạo / cập nhật cột gói) —');
-  const hit = forms.find((m) => m.id === S.cfg.src.packId) || forms.find((m) => m.name === PACK_NAME);
-  el.value = hit ? hit.id : ''; S.cfg.src.packId = el.value; packHint();
-}
-$('selPack').onchange = () => { S.cfg.src.packId = $('selPack').value; S.cfg.src.packSig = []; packHint(); };
-function packStale() { const sig = new Set(S.cfg.src.packSig || []); return packNeeded().map((f) => f.id).filter((id) => !sig.has(id)); }
-function packHint() {
-  if (!isEdit()) return; const el = $('packHint');
-  if (!S.cfg.src.packId) { el.textContent = 'Chưa có cột gói — Lưu khối sẽ tự tạo.'; el.style.color = 'var(--muted)'; return; }
-  const st = packStale();
-  if (st.length) { el.style.color = 'var(--muted)'; el.textContent = `Cột gói thiếu ${st.length} cột — Lưu khối sẽ tự cập nhật.`; el.title = st.map(fName).join(', '); }
-  else { el.textContent = `✓ Cột gói đủ ${packNeeded().length} cột.`; el.style.color = 'var(--ok)'; }
-}
-// Tạo / cập nhật cột gói (không hiện hộp thoại) — Lưu khối gọi hàm này tự động
-async function ensurePack() {
-  const cols = packNeeded(), formula = packFormula(cols); let done = false, err = '';
-  if (!S.table) return { done, err: 'chưa chọn bảng', cols, formula }; if (!cols.length) return { done, err: 'báo cáo chưa dùng cột nào', cols, formula };
-  try {
-    let fid = $('selPack').value || (S.metas.find((m) => m.name === PACK_NAME) || {}).id;
-    if (!fid) { const r = await withTimeout(S.table.addField({ type: FT('Formula', 20), name: PACK_NAME }), 15000); fid = typeof r === 'string' ? r : (r && (r.fieldId || r.id)); }
-    const f = await withTimeout(S.table.getFieldById(fid), 8000);
-    if (!f || !f.setFormula) throw new Error('SDK không hỗ trợ đặt công thức tự động');
-    await withTimeout(f.setFormula(formula), 15000);
-    S.metas = (await withTimeout(S.table.getFieldMetaList(), 15000)) || S.metas;
-    S.cfg.src.packId = fid; S.cfg.src.packSig = cols.map((c) => c.id); fillPackSelect(); done = true;
-  } catch (e) { err = String(e && e.message || e); dlog('pack.create.error', err); }
-  let check = null; if (done) { await sleep(1500); check = await previewPack(true); if (!(check && check.ok)) { await sleep(2500); check = await previewPack(true); } } // công thức mới cần vài giây để Lark tính
-  return { done, err, cols, formula, check };
-}
-async function makePack() {
-  if (!S.table) return toast('Chưa chọn bảng.'); if (!packNeeded().length) return toast('Báo cáo chưa dùng cột nào.');
-  toast('Đang tạo / cập nhật cột gói…', 8000);
-  const { done, err, cols, formula, check } = await ensurePack();
-  openModal('Cột gói dữ liệu cho khối',
-    (done ? `<p class="msg ${check && check.ok ? 'ok' : 'warn'}">Đã tạo / cập nhật cột <b>${esc(PACK_NAME)}</b>. ${esc(check ? check.msg : '')}</p>`
-      : `<p class="msg warn">Không tự tạo được cột (${esc(err)}). Làm thủ công: trong bảng <b>${esc(S.tableMeta.name)}</b> thêm cột kiểu <b>Công thức</b> tên <b>${esc(PACK_NAME)}</b>, dán công thức dưới đây, rồi chọn cột đó ở ô "Cột gói".</p>`)
-    + `<p class="hint">Công thức gói ${cols.length} cột:</p><pre>${esc(formula)}</pre>`,
-    [['Sao chép công thức', async () => { toast((await copyText(formula)) ? 'Đã chép công thức.' : 'Không chép được, hãy bôi đen và Ctrl+C.'); }]]);
-}
-async function previewPack(silent) {
-  const packId = S.cfg.src.packId; if (!packId) { if (!silent) toast('Chưa chọn cột gói.'); return null; }
-  if (!dashboard || !dashboard.getPreviewData) { if (!silent) toast('Chỉ kiểm tra được khi đang sửa khối.'); return null; }
-  const cols = packNeeded(), range = await currentRange(); await baseTokenNow();
-  let pv; try { pv = await dashCall((d) => withTimeout(d.getPreviewData(packCondition(packId, range)), 15000), 'pack.preview', (x) => Array.isArray(x) && x.length > 1 && x[0] && x[0].length >= 2); }
-  catch (e) { const msg = 'Lark không cho nhóm theo cột gói: ' + (e && e.message || e); if (!silent) toast(msg, 8000); return { ok: false, msg }; }
-  const rows = unpackRows(pv, cols), ok = rows.length > 0 && rows.tagged && !rows.missing.length;
-  let msg = !rows.length ? 'Cột gói chưa trả dữ liệu (công thức trống hoặc bảng rỗng).' : !rows.tagged ? 'Cột gói không đúng định dạng. Bấm "Tạo / cập nhật cột gói".' : rows.missing.length ? 'Cột gói còn thiếu: ' + rows.missing.map((f) => f.name).join(', ') + '.' : `Cột gói hoạt động: Lark trả ${rows.length.toLocaleString('vi-VN')} dòng, đủ ${cols.length} cột.`;
-  if (ok) S.cfg.src.packSig = cols.map((c) => c.id);
-  dlog('pack.preview', { rows: rows.length, need: cols.length, missing: rows.missing.length }); packHint();
-  if (!silent) toast(msg, 9000); return { ok, msg, rows: rows.length };
-}
-$('btnPack').onclick = () => makePack().catch((e) => toast('Lỗi: ' + e.message));
-$('btnPackTest').onclick = () => previewPack(false).catch((e) => toast('Lỗi: ' + e.message));
 async function readBack() { try { const c = await withTimeout(dashboard.getConfig(), 5000); const dc = [].concat((c && c.dataConditions) || [])[0]; return { ts: c && c.customConfig && c.customConfig.ts, group: dc && dc.groups && dc.groups[0] && dc.groups[0].fieldId }; } catch (e) { return { ts: null, group: null }; } }
-async function savePackVerified(cfg, cond, packId, step) {
-  const token = cond.baseToken || await baseTokenNow(), g = { fieldId: packId }, extra = token ? { baseToken: token } : {};
-  const variants = [['full', cond], ['simple', Object.assign({ tableId: cond.tableId, groups: [g] }, extra)], ['counta', Object.assign({ tableId: cond.tableId, dataRange: cond.dataRange, groups: [g], series: 'COUNTA' }, extra)]];
-  const tryOne = async (dn, d, vn, v, ms) => { step(`Gắn cột gói vào khối (${dn} · ${vn})…`); try { await withTimeout(d.saveConfig({ customConfig: cfg, dataConditions: [v] }), ms); await sleep(600); const b = await readBack(); dlog('save.' + dn + '.' + vn, b); return b; } catch (e) { const m = String(e && e.message || e); dlog('save.' + dn + '.' + vn + '.error', m); return m === 'timeout' ? 'timeout' : null; } };
-  for (const [vn, v] of variants) { const b = await tryOne('khối', dashboard, vn, v, 10000); if (b === 'timeout') break; if (b && b.ts === cfg.ts && b.group === packId) return 'ok'; }
-  const bd = await dashFor(token);
-  if (bd !== dashboard) for (const [vn, v] of variants) {
-    const b = await tryOne('base', bd, vn, v, 15000); if (!b || b === 'timeout' || b.group !== packId) continue; if (b.ts === cfg.ts) return 'ok';
-    try { await withTimeout(dashboard.saveConfig({ customConfig: cfg, dataConditions: [v] }), 15000); await sleep(600); } catch (e) {}
-    const b2 = await readBack(); if (b2.ts === cfg.ts && b2.group === packId) return 'ok';
-  }
-  return 'nogroup';
-}
 function flagFix(el, msg) { if (!el) return; const sec = el.closest('.sec'); if (sec) sec.classList.remove('collapsed'); el.classList.add('needfix'); el.scrollIntoView({ block: 'center' }); toast(msg, 8000); setTimeout(() => el.classList.remove('needfix'), 6000); }
 async function saveDash() {
   if (S.tab !== 'design') setTab('design');
@@ -1944,33 +1841,27 @@ async function saveDash() {
   const btn = $('btnDashSave'); btn.disabled = true; S.saving = true; let result = 'fail', err = '', early = '';
   const step = (t) => { const el = $('saveStep'); if (el) el.textContent = t; };
   openModal('Đang lưu khối', '<p id="saveStep" style="font-weight:600;margin:0">Đang chuẩn bị…</p><p class="hint">Đừng đóng khung sửa khối cho tới khi có kết quả.</p>'); $('mClose').hidden = true;
-  // cột gói: tự tạo / cập nhật khi thiếu cột, người thiết kế không phải bấm riêng
-  let packOk = !!S.cfg.src.packId && !packStale().length;
-  if (S.cfg.src.packId && !packOk) { step('Kiểm tra cột gói…'); const ck = await previewPack(true).catch(() => null); packOk = !!(ck && ck.ok); }
-  if (!packOk) {
-    step('Tự tạo / cập nhật cột gói (' + packNeeded().length + ' cột)…'); const r = await ensurePack().catch((e) => ({ done: false, err: String(e && e.message || e) }));
-    packOk = !!(r.done && r.check && r.check.ok); dlog('save.autopack', { done: r.done, ok: packOk, err: r.err || '' });
-    if (!packOk) { btn.disabled = false; S.saving = false; $('mClose').hidden = false; closeModal(); if (!r.done) return makePack(); return flagFix($('btnPack'), 'Đã cập nhật cột gói nhưng Lark chưa tính xong — đợi vài giây rồi bấm Lưu khối lại.'); }
-  }
-  const packId = S.cfg.src.packId;
   try {
-    await baseTokenNow(); const ts = Date.now();
-    const packCols = packNeeded().map((f) => ({ id: f.id, name: f.name, type: f.type, k: f.k }));
+    await baseTokenNow(); const ts = Date.now(); if (!S.metas.length && S.table) S.metas = (await withTimeout(S.table.getFieldMetaList(), 15000)) || [];
+    const packCols = packNeeded().map((f) => ({ id: f.id, name: f.name, type: f.type, k: f.k })); // các cột báo cáo cần đọc (giữ tên cũ để khối cũ vẫn chạy)
     const raw = { ...clone(S.cfg), src: { ...S.cfg.src, baseToken: S.srcToken, dataToken: S.srcToken || S.selfToken || '', packCols } };
     const p = await packCfg(raw); const cfg = { app: 'rs', v: 2, ts, z: p.z, d: p.d, tableId: raw.src.tableId, name: L().title || '' };
     const size = JSON.stringify(cfg).length; dlog('save.size', size);
     if (size > BLOCK_MAX) { early = `Cấu hình quá lớn (${size} / tối đa ${BLOCK_MAX} ký tự). Hãy bớt mẫu hoặc cột.`; return; }
-    const cond = packCondition(packId, await currentRange());
-    const ok = (await savePackVerified(cfg, cond, packId, step)) === 'ok';
-    if (!ok) { step('Lark chưa nhận cột gói — lưu thiết kế, giữ nguồn dữ liệu cũ…'); try { await withTimeout(dashboard.saveConfig({ customConfig: cfg }), 15000); } catch (e) { err = String(e && e.message || e); } }
-    step('Đọc lại cấu hình để xác nhận…'); const b = await readBack();
-    result = b.ts === ts && b.group === packId ? 'ok' : b.ts === ts ? 'nogroup' : 'fail'; dlog('save.final', { result, group: b.group });
+    // Khối chỉ cần khai báo bảng nguồn; dữ liệu do extension đọc thẳng khi bấm Báo cáo
+    const tk = S.srcToken || S.selfToken || '', extra = tk ? { baseToken: tk } : {}, prim = (S.metas.find((m) => m.isPrimary) || S.metas[0] || {}).id;
+    const variants = [['bảng', [Object.assign({ tableId: raw.src.tableId }, extra)]], ['bảng + cột chính', prim ? [Object.assign({ tableId: raw.src.tableId, dataRange: { type: (SDK.SourceType && SDK.SourceType.ALL) || 'ALL' }, groups: [{ fieldId: prim }], series: 'COUNTA' }, extra)] : null], ['chỉ thiết kế', null]];
+    for (const [vn, dc] of variants) {
+      if (vn !== 'chỉ thiết kế' && !dc) continue; step('Lưu khối (' + vn + ')…');
+      try { await withTimeout(dashboard.saveConfig(dc ? { customConfig: cfg, dataConditions: dc } : { customConfig: cfg }), 15000); } catch (e) { err = String(e && e.message || e); dlog('save.' + vn + '.error', err); continue; }
+      await sleep(600); const b = await readBack(); dlog('save.' + vn, b); if (b.ts === ts) { result = 'ok'; err = ''; break; }
+    }
+    dlog('save.final', { result });
   } catch (e) { err = String(e && e.message || e); dlog('save.exception', err); }
   finally {
     btn.disabled = false; setTimeout(() => { S.saving = false; }, 2500); $('mClose').hidden = false;
     const html = early ? `<p class="msg err">${esc(early)}</p>`
       : result === 'ok' ? `<p class="msg ok"><b>Đã lưu khối — Lark đã xác nhận.</b><br>Báo cáo "${esc(L().title)}" · ${S.cfg.layouts.length} mẫu. Người xem chọn điều kiện lọc rồi bấm <b>Báo cáo</b> để xem dữ liệu.</p><p class="msg warn">Nếu Base App có chế độ chỉnh sửa / phát hành, hãy bấm <b>Phát hành (Publish)</b> để người xem thấy bản mới.</p>`
-      : result === 'nogroup' ? `<p class="msg warn"><b>Đã lưu thiết kế nhưng Lark chưa nhận cột gói</b>${err ? ' (' + esc(err) + ')' : ''}. Bấm "Kiểm tra" ở mục Nguồn dữ liệu rồi Lưu khối lần nữa.</p>`
       : `<p class="msg err"><b>Lark chưa xác nhận lưu khối</b>${err ? ' (' + esc(err) + ')' : ''}. Bấm Lưu khối lần nữa; nếu vẫn lỗi, bấm Ctrl + Shift + D để mở khung chẩn đoán và gửi lại.</p>`;
     openModal(result === 'ok' && !early ? 'Đã lưu khối' : 'Kết quả lưu khối', html);
     if (result === 'ok') { dirty = false; setStatus('ok', 'Đã lưu khối'); }
@@ -1978,114 +1869,28 @@ async function saveDash() {
 }
 $('vDl').onclick = (e) => { if (!S.ran) return toast('Bấm Báo cáo trước khi tải về.'); const r = e.currentTarget.getBoundingClientRect(); showMenu(r.right - 220, r.bottom + 4, [['Excel (.xlsx)', doXlsx], ['PDF — khổ A4 tự chọn dọc / ngang', doPdf]]); };
 $('btnDashSave').onclick = () => saveDash();
-const rows0 = (d) => (Array.isArray(d) ? d.length - 1 : 0);
-const ungrouped = (d) => !Array.isArray(d) || d.length < 2 || !d[0] || d[0].length < 2;
+const DAY = 864e5;
+// Báo cáo luôn đọc thẳng bảng nguồn (theo quyền của người đang xem); lọc làm trên máy
 function refreshLive(c, quiet) {
   if (!c) return Promise.resolve();
-  const key = liveKey(quiet && S.ran ? S.fvRun : S.fv);
-  if (S.livePromise && S.liveKeyNow === key) { if (!quiet && !S.loading) { S.loading = true; render(); } return S.livePromise; } // đang lấy cùng điều kiện → chờ cùng lần đó
-  if (S.liveTok) S.liveTok.stop = true; // điều kiện khác → bỏ lần cũ
+  const key = liveKey();
+  if (S.livePromise && S.liveKeyNow === key) { if (!quiet && !S.loading) { S.loading = true; render(); } return S.livePromise; }
+  if (S.liveTok) S.liveTok.stop = true;
   const tok = (S.liveTok = { stop: false }); S.liveKeyNow = key;
   const pr = refreshLive0(c, quiet, tok, key).finally(() => { if (S.livePromise === pr) S.livePromise = null; });
   S.livePromise = pr; return pr;
 }
-// Lark chỉ trả tối đa ~5.000 nhóm dòng mỗi lần → gửi điều kiện lọc ngày lên Lark (filterInfo) để Lark lọc trước
-const LARK_CAP = window.__LARK_CAP || 5000, DAY = 864e5; // __LARK_CAP: chỉ để kiểm thử
-const SERVER_DATE_TYPES = () => new Set([FT('DateTime', 5), FT('CreatedTime', 1001), FT('ModifiedTime', 1002)]);
-function serverFilter(fv) {
-  const conds = [];
-  for (const F of S.cfg.filters) {
-    if (!DATE_KINDS.has(F.kind)) continue; const f = S.fIdx.get(F.f); if (!f || !SERVER_DATE_TYPES().has(f.type)) continue; // chỉ cột ngày gốc của Lark
-    const v = fv[F.id] || {}, from = F.kind === 'day' ? v.d : F.kind === 'date' ? v.from : '', to = F.kind === 'day' ? v.d : v.to;
-    // nới rộng 2 ngày mỗi phía cho chắc (múi giờ / cách Lark so sánh), phần chính xác vẫn lọc lại trên máy
-    if (from) conds.push({ fieldId: F.f, operator: 'isGreater', value: dayStart(from) - 2 * DAY });
-    if (to) conds.push({ fieldId: F.f, operator: 'isLess', value: dayEnd(to) + 2 * DAY });
-  }
-  return conds.length ? { conjunction: 'and', conditions: conds } : null;
-}
-// Chia khoảng ngày thành nhiều đợt, mỗi đợt dưới giới hạn 5.000 của Lark.
-// Mỗi đợt hỏi Lark rộng hơn 1 ngày mỗi phía, rồi giữ lại đúng các ngày của đợt → không trùng, không sót.
-async function fetchChunked(c, cond, quiet) {
-  const F = S.cfg.filters.find((x) => DATE_KINDS.has(x.kind) && S.fIdx.get(x.f) && SERVER_DATE_TYPES().has(S.fIdx.get(x.f).type))
-    || (() => { const f = (c.src.packCols || []).find((x) => SERVER_DATE_TYPES().has(x.type)); return f ? { f: f.id, kind: 'date', id: '_' } : null; })();
-  if (!F || !dashboard.getPreviewData) return null; const fid = F.f;
-  const fv = quiet && S.ran ? S.fvRun : S.fv, v = fv[F.id] || {};
-  let lo = F.kind === 'day' ? v.d : F.kind === 'date' ? v.from : '', hi = F.kind === 'day' ? v.d : v.to; const userRange = !!(lo || hi);
-  const other = ((serverFilter(fv) || {}).conditions || []).filter((x) => x.fieldId !== fid);
-  const fiFor = (a, b, extra) => ({ conjunction: 'and', conditions: [...other, ...(extra || [{ fieldId: fid, operator: 'isGreater', value: dayStart(a) - DAY }, { fieldId: fid, operator: 'isLess', value: dayEnd(b) + DAY }])] });
-  const ask = async (fi, groups) => { const cc = cond(fi); if (groups) cc.groups = groups; return withTimeout(dashboard.getPreviewData(cc), 30000); };
-  // 1) đếm số dòng theo từng ngày để chia đợt
-  let days = null;
-  try {
-    const d = await ask(lo || hi ? fiFor(lo || '1970-01-02', hi || '2100-12-30') : (other.length ? { conjunction: 'and', conditions: other } : null), [{ fieldId: fid }]);
-    if (Array.isArray(d) && d.length > 1 && rows0(d) < LARK_CAP - 1) {
-      const m = new Map(); for (const row of d.slice(1)) { const cell = row && row[0]; if (!cell) continue; const ms = typeof cell.value === 'number' ? cell.value : parseDate(cell.text ?? cell.value); if (!ms) continue; const iso = isoDay(ms); m.set(iso, (m.get(iso) || 0) + ((row[1] && +row[1].value) || 1)); }
-      if (m.size) days = [...m.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1));
-    }
-    dlog('chunk.days', days ? days.length + ' ngày' : 'không đếm được theo ngày → chia đôi dần');
-  } catch (e) { if (isCancel(e)) throw e; dlog('chunk.days.error', String(e && e.message || e)); }
-  if (days) { lo = lo || days[0][0]; hi = hi || days[days.length - 1][0]; }
-  lo = lo || '2000-01-01'; hi = hi || isoDay(Date.now() + 366 * DAY);
-  let plan = [];
-  if (days) { const budget = Math.floor(LARK_CAP * 0.8); let a = null, sum = 0, prev = null; for (const [iso, n] of days) { if (iso < lo || iso > hi) continue; if (a && sum + n > budget) { plan.push([a, prev]); a = null; sum = 0; } if (!a) a = iso; sum += n; prev = iso; } if (a) plan.push([a, prev]); }
-  else plan = [[lo, hi]];
-  const out = []; let capped = false, n = 0;
-  const tok = S.liveTok; // đã hủy thì thôi cập nhật tiến độ
-  const prog = () => { if ((tok && tok.stop) || (quiet && S.ran)) return; /* cập nhật nền: giữ nguyên báo cáo đang hiện */ S.loadCount = out.length; const el = $('ldCount'); if (el) el.textContent = ` đợt ${n}/${Math.max(n, plan.length)} · ${out.length.toLocaleString('vi-VN')} dòng`; $('sline').textContent = `Đang lấy dữ liệu… đợt ${n} · ${out.length.toLocaleString('vi-VN')} dòng`; };
-  const get = async (a, b, depth) => {
-    n++; prog(); const d = await ask(fiFor(a, b));
-    if (rows0(d) >= LARK_CAP - 1 && a < b && depth < 24) { const mid = isoDay(Math.floor((dayStart(a) + dayStart(b)) / 2 / DAY) * DAY + 12 * 3600e3); const nx = isoDay(dayStart(mid) + DAY + 12 * 3600e3); await get(a, mid, depth + 1); await get(nx > b ? b : nx, b, depth + 1); return; }
-    if (rows0(d) >= LARK_CAP - 1) capped = true;
-    for (const r of unpackRows(d, c.src.packCols)) { const ms = r[fid]; if (ms === null || ms === undefined) continue; const iso = isoDay(ms); if (iso >= a && iso <= b) out.push(r); }
-  };
-  for (const [a, b] of plan) await get(a, b, 0);
-  // dòng chưa có ngày: chỉ lấy khi không lọc theo ngày
-  if (!userRange) { try { const d = await ask({ conjunction: 'and', conditions: [...other, { fieldId: fid, operator: 'isEmpty', value: null }] }); for (const r of unpackRows(d, c.src.packCols)) if (r[fid] === null || r[fid] === undefined) out.push(r); } catch (e) { if (isCancel(e)) throw e; dlog('chunk.empty.error', String(e && e.message || e)); } }
-  prog(); return { rows: out, capped, n };
-}
 async function refreshLive0(c, quiet, tok, key) {
-  tok = tok || { stop: false }; const chk = () => { if (tok.stop) throw new Error(CANCEL); };
+  const chk = () => { if (tok.stop) throw new Error(CANCEL); };
   S.liveBusy = true; if (!quiet) { S.loading = true; S.loadCount = 0; render(); }
   try {
-    const sc = c.__dc || {}, tk = sc.baseToken || c.src.dataToken || c.src.baseToken || '';
-    const pg = { fieldId: c.src.packId }; if (SDK.GroupMode && SDK.GroupMode.INTEGRATED) pg.mode = SDK.GroupMode.INTEGRATED;
-    const range0 = Object.assign({}, sc.dataRange || { type: (SDK.SourceType && SDK.SourceType.ALL) || 'ALL' }); delete range0.filterInfo;
-    const cond0 = (fi) => Object.assign({ tableId: sc.tableId || c.src.tableId, dataRange: fi ? Object.assign({}, range0, { filterInfo: fi }) : range0, groups: [pg], series: 'COUNTA' }, tk ? { baseToken: tk } : {});
-    const cond = (fi) => { chk(); return cond0(fi); }; // mỗi lần hỏi Lark đều kiểm tra đã bị hủy chưa
-    const fi = serverFilter(quiet && S.ran ? S.fvRun : S.fv); let data = null, how = '';
-    const good = (d) => rows0(d) > 0 && !ungrouped(d);
-    // 1) có lọc ngày: hỏi Lark đã lọc sẵn
-    if (fi && dashboard.getPreviewData) { try { const d = await withTimeout(dashboard.getPreviewData(cond(fi)), 25000); dlog('live.filtered', rows0(d) + ' dòng · ' + JSON.stringify(fi.conditions.map((x) => x.operator + ' ' + isoDay(x.value)))); if (Array.isArray(d) && d.length >= 1 && (good(d) || rows0(d) === 0)) { data = d; how = 'lọc trên Lark'; } } catch (e) { dlog('live.filtered.error', String(e && e.message || e)); } }
-    // 2) không lọc được trên Lark → lấy toàn bộ (tối đa ~5.000 nhóm)
-    if (!data) {
-      if (!S.noGetData) { try { const d = await withTimeout(dashboard.getData(), 25000); if (good(d)) { data = d; how = 'getData'; } } catch (e) { S.noGetData = true; dlog('getData.error', String(e && e.message || e)); } } // getData lỗi 1 lần thì lần sau bỏ qua, đỡ chậm
-      const tries = [];
-      if (!data && dashboard.getPreviewData) tries.push(['chung preview', () => dashboard.getPreviewData(cond(null))]);
-      if (!data) for (const t of [...new Set([c.src.dataToken, c.src.baseToken, sc.baseToken].filter(Boolean))]) { const d2 = await dashFor(t).catch(() => null); if (d2 && d2 !== dashboard) { tries.push(['base getData', () => d2.getData()]); if (d2.getPreviewData) tries.push(['base preview', () => d2.getPreviewData(cond(null))]); } }
-      if (!data && !S.noGetData) tries.push(['đọc lại', async () => { await sleep(1500); return dashboard.getData(); }]);
-      for (const [lb, fn] of tries) { try { const alt = await withTimeout(fn(), 20000); dlog('live.try', lb + ' → ' + rows0(alt)); if (good(alt)) { data = alt; how = lb; break; } } catch (e) { dlog('live.try', lb + ' lỗi: ' + String(e && e.message || e)); } }
-    }
-    // Chạm giới hạn → chia nhỏ theo ngày, lấy lần lượt từng đợt rồi ghép lại (người xem chỉ thấy "đang lấy dữ liệu")
-    chk(); let chunked = null;
-    if (data && rows0(data) >= LARK_CAP - 1 && !ungrouped(data)) { try { chunked = await fetchChunked(c, cond, quiet); } catch (e) { if (isCancel(e)) throw e; dlog('chunk.error', String(e && e.message || e)); } }
-    chk();
-    if (chunked) {
-      S.capped = chunked.capped; S.fetchHow = 'chia ' + chunked.n + ' đợt'; S.fetchFi = 'chunk';
-      S.rows = computeCalcs(chunked.rows); S.rowsAt = Date.now(); S.fromCache = 0; LC.set('live|' + key, { at: S.rowsAt, rows: chunked.rows, capped: chunked.capped }); S.liveAt = Date.now(); setStatus('ok', 'Đã cập nhật ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
-      dlog('chunk.done', `${chunked.n} đợt · ${chunked.rows.length} dòng${chunked.capped ? ' · vẫn có ngày vượt giới hạn' : ''}`); return;
-    }
-    if (!data || (ungrouped(data) && rows0(data) > 0) || !c.src.packId) { // cột gói không dùng được → thử đọc thẳng bảng
-      try { const r = await directRead(c, { chk, onPage: (n, p) => { if (quiet && S.ran) return; S.loadCount = n; const e2 = $('ldCount'); if (e2) e2.textContent = ` ${n.toLocaleString('vi-VN')} dòng (đọc thẳng)`; $('sline').textContent = `Đang đọc thẳng bảng… ${n.toLocaleString('vi-VN')} dòng`; } });
-        chk(); S.capped = false; S.fetchHow = 'đọc thẳng'; S.fetchFi = 'direct'; S.rows = computeCalcs(r.rows); S.rowsAt = Date.now(); S.liveAt = Date.now(); S.fromCache = 0; if (r.rows.length) LC.set('live|' + key, { at: S.rowsAt, rows: r.rows, capped: false });
-        dlog('direct.done', `${r.rows.length} dòng · ${r.pages} trang · ${r.ms}ms`); setStatus('ok', 'Đã cập nhật ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })); return;
-      } catch (e) { if (isCancel(e)) throw e; dlog('direct.error', String(e && e.message || e)); }
-    }
-    if (data && ungrouped(data) && rows0(data) > 0) throw new Error('Lark chỉ trả tổng số thay vì từng dòng: khối chưa được nhóm theo cột gói. Người sửa khối hãy mở Sửa khối → Kiểm tra → Lưu khối.');
-    const rows = unpackRows(data || [], c.src.packCols);
-    if (rows.missing.length) throw new Error('Cột gói thiếu dữ liệu của: ' + rows.missing.map((f) => f.name).join(', ') + '. Mở Sửa khối → Tạo / cập nhật cột gói → Lưu khối.');
-    S.capped = rows0(data) >= LARK_CAP - 1; S.fetchHow = how; S.fetchFi = fi && how === 'lọc trên Lark' ? JSON.stringify(fi) : '';
-    if (S.capped) dlog('live.cap', `Lark trả ${rows0(data)} nhóm (chạm giới hạn) · ${how}`);
-    S.rows = computeCalcs(rows); S.rowsAt = Date.now(); S.liveAt = Date.now(); S.fromCache = 0; if (rows.length) LC.set('live|' + key, { at: S.rowsAt, rows: [...rows], capped: S.capped }); setStatus('ok', 'Đã cập nhật ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
+    let r;
+    try {
+      r = await directRead(c, { chk, onPage: (n, p) => { if (tok.stop || (quiet && S.ran)) return; S.loadCount = n; const e2 = $('ldCount'); if (e2) e2.textContent = ` ${n.toLocaleString('vi-VN')} dòng`; $('sline').textContent = `Đang đọc dữ liệu… ${n.toLocaleString('vi-VN')} dòng (trang ${p})`; } });
+    } catch (e) { if (isCancel(e)) throw e; const m = String(e && e.message || e); dlog('direct.error', m); throw new Error('Không đọc được bảng nguồn: ' + m + '. Tài khoản của bạn cần có quyền xem bảng này.'); }
+    chk(); S.fetchHow = 'đọc thẳng'; S.rows = computeCalcs(r.rows); S.rowsAt = Date.now(); S.liveAt = Date.now(); S.fromCache = 0;
+    LC.set('live|' + key, { at: S.rowsAt, rows: r.rows });
+    dlog('direct.done', `${r.rows.length} dòng · ${r.pages} trang · ${(r.ms / 1000).toFixed(1)}s`); setStatus('ok', 'Đã cập nhật ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
   } finally { if (!tok.stop) { S.liveBusy = false; S.loading = false; if (quiet && S.ran) render(); } }
 }
 /* ---------- THỬ NGHIỆM: đọc thẳng bảng ở chế độ xem khối (không qua cột gói) ---------- */
@@ -2097,13 +1902,13 @@ async function directTable(c) {
 // đọc tối đa maxRows dòng (Infinity = hết bảng); trả {rows, ms, pages, more}
 async function directRead(c, opt) {
   opt = opt || {}; const t0 = performance.now(), chk = opt.chk || (() => {}), table = await directTable(c); chk();
-  let want = null; if (c.src.viewId) { try { const v = await withTimeout(table.getViewById(c.src.viewId), 8000); want = new Set(((await withTimeout(v.getVisibleRecordIdList(), 30000)) || []).filter(Boolean)); } catch (e) { dlog('direct.view.error', String(e && e.message || e)); } }
-  const small = table.getRecordsByPage ? (o) => table.getRecordsByPage(o) : (o) => table.getRecords(o);
+  const want = null, vw = c.src.viewId ? { viewId: c.src.viewId } : {};
+  const small = table.getRecordsByPage ? (o) => table.getRecordsByPage(Object.assign(o, vw)) : (o) => table.getRecords(Object.assign(o, vw));
   let big = S.bigPage !== false && !!table.getRecords, size = big ? 5000 : 200;
   const out = []; let token, pages = 0, more = false; const max = opt.maxRows || Infinity;
   while (pages < 2000) {
     chk(); let res;
-    if (big) { try { res = await withTimeout(table.getRecords({ pageSize: size, pageToken: token }), 60000); if (pages === 0 && res && res.hasMore && ((res.records || []).length <= 200)) { S.bigPage = false; big = false; size = 200; } else S.bigPage = true; } catch (e) { dlog('direct.big.error', String(e && e.message || e)); S.bigPage = false; big = false; size = 200; if (pages) throw e; res = null; } }
+    if (big) { try { res = await withTimeout(table.getRecords(Object.assign({ pageSize: size, pageToken: token }, vw)), 60000); if (pages === 0 && res && ((res.records || []).length <= 200)) { S.bigPage = false; big = false; size = 200; res = null; } else S.bigPage = true; /* Lark chế độ xem chỉ trả 200 dòng và báo "hết" → không tin */ } catch (e) { dlog('direct.big.error', String(e && e.message || e)); S.bigPage = false; big = false; size = 200; if (pages) throw e; res = null; } }
     if (!res) res = await withTimeout(small({ pageSize: 200, pageToken: token }), 25000);
     pages++;
     for (const r of (res && res.records) || []) { if (!r || (want && !want.has(r.recordId))) continue; const o = {}; for (const f of S.fields) if (!f.calc) o[f.id] = cellVal(f, r.fields ? r.fields[f.id] : undefined); out.push(o); }
@@ -2112,36 +1917,6 @@ async function directRead(c, opt) {
     if (!more || out.length >= max) break; token = nx;
   }
   return { rows: out, ms: Math.round(performance.now() - t0), pages, more, size };
-}
-async function probeDirect() {
-  const el = $('probeOut'); const say = (h) => { if (el) el.innerHTML = h; };
-  const c = S.cfg; if (!c || !c.src || !c.src.tableId) return say('Khối chưa cấu hình.');
-  const res = { mode: S.dash, base: c.src.baseToken ? 'base khác' : 'base hiện tại', tests: {} }, T = res.tests, lines = [];
-  const show = (extra) => say(`<b>Đang so sánh các cách đọc thẳng bảng…</b>${extra ? ' ' + esc(extra) : ''}<br>${lines.join('<br>')}`);
-  const fmt = (ms) => (ms / 1000).toFixed(1) + 's';
-  const run = async (name, label, fn) => { show(label); const t0 = performance.now(); try { const r = await withTimeout(fn(), 90000); r.ms = Math.round(performance.now() - t0); T[name] = r; lines.push(`✓ ${label}: ${r.n.toLocaleString('vi-VN')} ${r.unit || 'dòng'} trong ${fmt(r.ms)}${r.note ? ' · ' + r.note : ''}`); } catch (e) { T[name] = { error: String(e && e.message || e) }; lines.push(`✗ ${label}: ${esc(T[name].error)}`); } };
-  let table; try { table = await directTable(c); } catch (e) { dlog('probe.direct', { ...res, ok: false, error: String(e && e.message || e) }); return say(`<p class="msg warn"><b>KHÔNG đọc thẳng được</b>: ${esc(e && e.message || e)}</p>`); }
-  let total = 0;
-  await run('ids', 'Danh sách mã bản ghi (getRecordIdList)', async () => { const ids = (await table.getRecordIdList()) || []; total = ids.length; return { n: ids.length }; });
-  await run('p200', 'Trang 200 dòng × 3 (getRecordsByPage)', async () => { const g = table.getRecordsByPage ? (o) => table.getRecordsByPage(o) : (o) => table.getRecords(o); const t1 = performance.now(); let tk, n = 0, pg = 0; for (; pg < 3; pg++) { const r = await g({ pageSize: 200, pageToken: tk }); n += ((r && r.records) || []).length; if (!r || !r.hasMore) { pg++; break; } tk = r.pageToken; } return { n, pages: pg, note: `≈${Math.round((performance.now() - t1) / Math.max(1, pg))} ms/trang` }; });
-  if (table.getRecords) await run('p5000', 'Trang lớn 5.000 dòng (getRecords)', async () => { const r = await table.getRecords({ pageSize: 5000 }); const n = ((r && r.records) || []).length; return { n, more: !!(r && r.hasMore), note: r && r.hasMore ? 'còn trang sau' : 'hết bảng' }; });
-  const flds = S.fields.filter((f) => !f.calc);
-  await run('cols', `Theo cột (getFieldValueList × ${flds.length} cột)`, async () => { let n = 0, ok = 0; for (const f of flds) { const fo = await table.getFieldById(f.id); if (!fo || !fo.getFieldValueList) throw new Error('SDK không có getFieldValueList'); const v = (await fo.getFieldValueList()) || []; n = Math.max(n, v.length); ok++; } return { n, note: ok + ' cột' }; });
-  // ước tính đọc hết bảng
-  const N = total || Math.max(S.rows.length, 1), est = [];
-  if (T.p200 && T.p200.n) est.push(['trang 200', Math.ceil(N / 200) * T.p200.ms / T.p200.pages]);
-  if (T.p5000 && T.p5000.n) est.push(['trang 5.000', T.p5000.n > 200 ? Math.ceil(N / Math.max(T.p5000.n, 1)) * T.p5000.ms : null]);
-  if (T.cols && T.cols.n) est.push(['theo cột', T.cols.n >= N ? T.cols.ms : null]);
-  res.total = N; res.estimate = Object.fromEntries(est.map(([k, v]) => [k, v === null ? 'không dùng được' : fmt(v)]));
-  dlog('probe.direct', res); lines.push(`<b>Ước tính đọc hết ${N.toLocaleString('vi-VN')} dòng:</b> ` + est.map(([k, v]) => `${k}: ${v === null ? 'không dùng được' : fmt(v)}`).join(' · '));
-  say(`<p class="msg ok" style="text-align:left">${lines.join('<br>')}</p><p class="hint">Bấm Sao chép rồi gửi kết quả này.</p>`);
-  const pre = $('mBody') && $('mBody').querySelector('pre'); if (pre) pre.textContent = JSON.stringify({ ver: VER, dash: S.dash, rows: S.rows.length, log: diag }, null, 1);
-}
-function startLive(c) {
-  S.liveCfg = c; if (S.liveHooked) return; S.liveHooked = true;
-  const go = () => { if (S.ran && !S.loading && !S.running) refreshLive(S.liveCfg, true).catch((e) => dlog('refresh.error', String(e && e.message || e))); };
-  try { dashboard.onDataChange(() => setTimeout(go, 800)); } catch (e) {}
-  setInterval(() => { if (document.visibilityState !== 'hidden' && S.fetchFi !== 'chunk') go(); }, 120000);
 }
 function showErr(e) { const m = String(e && e.message || e); setStatus('err', 'Chưa đọc được dữ liệu'); S.loading = false; $('sheet').innerHTML = `<div class="empty"><p class="msg err" style="display:inline-block;max-width:640px;text-align:left">${esc(m)}</p></div>`; dlog('error', m); }
 async function bootView() {
@@ -2163,7 +1938,7 @@ $('btnMore').onclick = (e) => {
   ]);
 };
 // Khung chẩn đoán: chỉ mở bằng phím tắt Ctrl + Shift + D
-function showDiag() { const t = JSON.stringify({ ver: VER, dash: S.dash, table: S.tableMeta && S.tableMeta.name, rows: S.rows.length, fields: S.fields.length, log: diag }, null, 1); openModal('Chẩn đoán', `<div id="probeOut" class="hint" style="margin-bottom:6px"></div><pre>${esc(t)}</pre>`, [['Thử đọc thẳng bảng', () => probeDirect()], ['Sao chép', async () => { const x = JSON.stringify({ ver: VER, dash: S.dash, table: S.tableMeta && S.tableMeta.name, rows: S.rows.length, fields: S.fields.length, log: diag }, null, 1); toast((await copyText(x)) ? 'Đã chép.' : 'Không chép được.'); }]]); }
+function showDiag() { const t = JSON.stringify({ ver: VER, dash: S.dash, table: S.tableMeta && S.tableMeta.name, rows: S.rows.length, fields: S.fields.length, log: diag }, null, 1); openModal('Chẩn đoán', `<pre>${esc(t)}</pre>`, [['Sao chép', async () => { const x = JSON.stringify({ ver: VER, dash: S.dash, table: S.tableMeta && S.tableMeta.name, rows: S.rows.length, fields: S.fields.length, log: diag }, null, 1); toast((await copyText(x)) ? 'Đã chép.' : 'Không chép được.'); }]]); }
 document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) { e.preventDefault(); showDiag(); } });
 
 /* =====================================================================
@@ -2177,7 +1952,7 @@ async function boot() {
     const dm = await detectDashboard(); S.dash = dm; dlog('dashMode', dm);
     if (dm) { try { dashboard.setRendered(); } catch (e) {} }
     if (dm === 'View' || dm === 'FullScreen') { await bootView(); try { dashboard.onConfigChange(async () => { let ts = null; try { const c2 = await withTimeout(dashboard.getConfig(), 6000); ts = c2 && c2.customConfig && c2.customConfig.ts; } catch (e) {} if (ts && S.cfg && ts === S.cfg.__ts) { dlog('configChange', 'bỏ qua — cấu hình không đổi'); return; } await bootView(); }); } catch (e) {} return; }
-    if (dm === 'Create' || dm === 'Config') { $('btnDashSave').hidden = false; $('packBox').hidden = false; $('modeTabs').querySelector('[data-m=view]').textContent = 'Xem thử'; }
+    if (dm === 'Create' || dm === 'Config') { $('btnDashSave').hidden = false; $('modeTabs').querySelector('[data-m=view]').textContent = 'Xem thử'; }
     const tables = await useBase('');
     const dc = dm === 'Config' ? await getDashCfg() : null;
     if (dc) {
