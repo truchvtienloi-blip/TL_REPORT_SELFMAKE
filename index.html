@@ -123,7 +123,11 @@ body.sidehid .layout{grid-template-columns:minmax(0,1fr)}body.sidehid .side{disp
 .modal{position:fixed;inset:0;background:#0007;display:none;align-items:center;justify-content:center;z-index:90;padding:14px}.modal.show{display:flex}
 .card{background:#fff;border-radius:12px;max-width:720px;width:100%;max-height:92vh;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
 .card h3{margin:0}
-.rpt td[data-dd]{cursor:pointer}.rpt td[data-dd]:hover{text-decoration:underline;color:#1456f0}
+.rpt td.csel{box-shadow:inset 0 0 0 9999px rgba(33,98,214,.16)}.rpt td.csel.ca{outline:2px solid #2162d6;outline-offset:-2px}
+body.cselecting .rpt tbody{user-select:none}
+.selst{flex:1;min-width:0;text-align:right;font-size:12px;color:#1f2329;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.selst b{font-weight:600}
+.histb{min-width:28px;font-size:15px;line-height:1}
+.rpt td[data-dd]:hover{text-decoration:underline dotted;text-underline-offset:2px}
 .gbar .gsep2{width:1px;height:16px;background:#c8ccd2;margin:0 4px}.gbar .pvchip b{color:#7a3db8}
 .ddw{max-height:60vh;overflow:auto;border:1px solid #c8ccd2}.ddt{border-collapse:collapse;width:100%;font-size:12px}.ddt th,.ddt td{border:1px solid #d5d8dc;padding:3px 6px;white-space:nowrap}.ddt th{position:sticky;top:0;background:#f2f3f5;font-weight:600}
 .xhd{display:flex;align-items:center;justify-content:space-between;gap:10px}.xhd h3,.xhd h4{flex:1;min-width:0}
@@ -314,6 +318,7 @@ body.dashview .top{display:none}
 </header>
 <!-- ======= THANH ĐỊNH DẠNG (thiết kế) ======= -->
 <div class="ribbon" id="ribbon" role="toolbar" aria-label="Định dạng báo cáo">
+  <div class="rg"><div class="rr"><button id="rUndo" class="histb" title="Hoàn tác (Ctrl+Z)" aria-label="Hoàn tác" disabled>↶</button><button id="rRedo" class="histb" title="Làm lại (Ctrl+Y)" aria-label="Làm lại" disabled>↷</button></div></div>
   <div class="rg" id="rgFont"><div class="rr">
     <select id="rFont" aria-label="Phông chữ" title="Phông chữ của cả báo cáo"><option>Times New Roman</option><option>Arial</option><option>Tahoma</option><option>Calibri</option><option>Segoe UI</option><option>Roboto</option></select>
     <input type="number" id="rFs" min="8" max="40" aria-label="Cỡ chữ" title="Cỡ chữ">
@@ -389,7 +394,7 @@ body.dashview .top{display:none}
     <button id="vDl" class="ib primary" title="Tải báo cáo về máy" aria-haspopup="menu"><svg class="i"><use href="#i-dl"/></svg>Tải về ▾</button>
   </div>
   <div class="stage" id="stage"><div id="sheet"><div class="empty">Đang tải…</div></div></div>
-  <div class="foot"><div class="ltabs" id="ltabs"></div><div class="sline" id="sline"></div></div>
+  <div class="foot"><div class="ltabs" id="ltabs"></div><div class="selst" id="selStat" hidden aria-live="polite"></div><div class="sline" id="sline"></div></div>
 </main>
 </div>
 </div>
@@ -409,6 +414,7 @@ body.dashview .top{display:none}
   </div>
   <label class="chk"><input type="checkbox" id="lFit"> Giãn cột vừa khung khi xem / in</label>
   <label class="chk"><input type="checkbox" id="lShowF"> In điều kiện lọc dưới tiêu đề</label>
+  <label class="chk"><input type="checkbox" id="lDrill"> Cho phép nhấp đúp vào ô số tổng hợp để xem dòng chi tiết</label>
 </div>
 
 <script type="module">
@@ -421,7 +427,7 @@ body.dashview .top{display:none}
 const SDK_URL = 'https://esm.sh/@lark-base-open/js-sdk@1.0.2';
 const XLSX_URL = 'https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
 const PACK_SEP = '‖', PACK_TAG = '§', PACK_NAME = 'Gói dữ liệu báo cáo';
-const BLOCK_MAX = 12000, VER = '1.12', VIEW_CAP = Infinity, CACHE_MS = 60000;
+const BLOCK_MAX = 12000, VER = '1.13', VIEW_CAP = Infinity, CACHE_MS = 60000;
 let SDK = null, bitable = null, dashboard = null, workspace = null, FieldType = null;
 const FT = (k, d) => (FieldType && FieldType[k] !== undefined ? FieldType[k] : d);
 
@@ -837,6 +843,8 @@ function mergeSpans(rows, cols, lay) {
 /* ---------------- PIVOT: xoay một cột thành nhiều cột ngang ----------------
    Hàng = các cột không tính tổng (+ nhóm), Giá trị = các cột có tính tổng, Cột ngang = lay.pv.f.
    Tạo các cột "ảo" dùng chung định dạng với cột giá trị gốc → toàn bộ phần vẽ / Excel / PDF / In dùng lại được. */
+// xem dòng chi tiết: đặt riêng từng mẫu; chưa đặt thì báo cáo thường tắt, Pivot bật
+const drillOn = (lay) => (lay && typeof lay.drill === 'boolean' ? lay.drill : !!pivotOn(lay));
 const pivotOn = (lay) => (lay && lay.pv && lay.pv.f && S.fIdx.has(lay.pv.f) ? lay.pv : null);
 let PVC = { sig: '', m: new WeakMap() };
 function pvKeyFn(pv, lay) {
@@ -882,7 +890,7 @@ function setPivot(fid) { apply((l) => { const f = S.fIdx.get(fid); l.pv = { f: f
 /* ---------------- xem chi tiết số liệu (bấm vào ô số tổng hợp) ---------------- */
 S.dd = [];
 function ddAttr(c, rows, label) {
-  if (!c || !c.agg) return ''; S.dd.push({ c, rows, label }); return ` data-dd="${S.dd.length - 1}" title="Bấm để xem các dòng chi tiết"`;
+  if (!c || !c.agg) return ''; S.dd.push({ c, rows, label }); return ` data-dd="${S.dd.length - 1}" title="Nhấp đúp để xem các dòng chi tiết"`;
 }
 function openDrill(i) {
   const d = S.dd[i]; if (!d) return; const lay = L(), c = d.c;
@@ -928,7 +936,7 @@ function noW(lay, n) { const fs = +lay.fs || 13; return Math.max(42, Math.ceil(S
 const loadingText = () => `<span class="ld" aria-hidden="true"></span>Đang lấy dữ liệu từ Lark…<span id="ldCount">${S.loadCount ? ' ' + S.loadCount.toLocaleString('vi-VN') + ' dòng' : ''}</span>`;
 function reportHTML(lay, rows, mode, fv, availW) {
   const design = mode === 'design', print = mode === 'print' || mode === 'xls', allOpen = mode === 'xls' || design;
-  const PV = pivotize(lay, rows); lay = PV.lay; const drill = mode === 'view' && S.ran; if (mode === 'view') S.dd = [];
+  const drill = mode === 'view' && S.ran && drillOn(lay); const PV = pivotize(lay, rows); lay = PV.lay; if (mode === 'view') S.dd = [];
   const cix = (k) => (cols[k]._ci === undefined ? ci[k] : cols[k]._ci); // chỉ số cột thật trong mẫu (cột ngang trỏ về cột giá trị gốc)
   const ci = lay.cols.map((c, i) => i).filter((i) => S.fIdx.has(lay.cols[i].f));
   const groups = (lay.groups || []).filter((g) => S.fIdx.has(g.f));
@@ -1030,7 +1038,7 @@ function reportHTML(lay, rows, mode, fv, availW) {
 }
 
 function render() {
-  if (!S.cfg) return;
+  if (!S.cfg) return; clearSel(true); if (S.tab === 'design' && !S.hist) histReset();
   const lay = L(), t0 = performance.now(), design = S.tab === 'design';
   const rows = design ? demoRows(lay) : filteredRows();
   const st = $('stage'), sx = st.scrollLeft, sy = st.scrollTop;
@@ -1154,10 +1162,66 @@ function tokenMenu(x, y, lineEl) {
     '-', { t: 'Giá trị của cột', sub: cols.map((f) => ({ t: f.name, fn: () => insertToken(lineEl, '[' + f.name + ']') })) },
   ]);
 }
+/* ---------- chọn ô: kéo chuột trên bảng (xem), bấm tiêu đề cột = chọn cả cột, bấm ô STT = chọn cả dòng; Shift mở rộng; Ctrl+C chép ---------- */
+const SEL = { a: null, b: null, mode: '', trs: null, cells: [], drag: false, raf: 0 };
+function clearSel(silent) { for (const td of SEL.cells) td.classList.remove('csel', 'ca'); SEL.cells = []; SEL.a = SEL.b = null; SEL.trs = null; SEL.mode = ''; if ($('selStat')) $('selStat').hidden = true; document.body.classList.remove('cselecting'); }
+function selRowsOf() { const t = sheet.querySelector('.rpt table'); return t ? [...t.querySelectorAll('tbody tr')].filter((tr) => !tr.classList.contains('more')) : []; }
+function updSel() {
+  SEL.raf = 0; for (const td of SEL.cells) td.classList.remove('csel', 'ca'); SEL.cells = [];
+  if (!SEL.a || !SEL.b) return; const trs = SEL.trs || (SEL.trs = selRowsOf());
+  const ra = SEL.a.getBoundingClientRect(), rb = SEL.b.getBoundingClientRect();
+  const x1 = Math.min(ra.left, rb.left) + 1, x2 = Math.max(ra.right, rb.right) - 1;
+  let i1 = 0, i2 = trs.length - 1;
+  if (SEL.mode !== 'col') { const ia = trs.indexOf(SEL.a.closest('tr')), ib = trs.indexOf(SEL.b.closest('tr')); i1 = Math.min(ia, ib); i2 = Math.max(ia, ib); if (ia < 0 || ib < 0) return; }
+  for (let i = i1; i <= i2; i++) for (const td of trs[i].cells) { const r = td.getBoundingClientRect(), cx = (r.left + r.right) / 2; if (SEL.mode === 'row' || (cx >= x1 && cx <= x2)) { td.classList.add('csel'); SEL.cells.push(td); } }
+  if (SEL.mode === 'cell' && SEL.a.classList.contains('csel')) SEL.a.classList.add('ca');
+  selStats();
+}
+function cellNum(td, lay) {
+  const ci = td.dataset.ci, c = ci !== undefined ? lay.cols[+ci] : null; if (c && !c.agg && colKind(c) !== 'num') return null;
+  let t = td.textContent.trim(); if (!t) return null; let neg = false;
+  if (/^\(.*\)$/.test(t)) { neg = true; t = t.slice(1, -1); } if (/^[-−]/.test(t)) { neg = true; t = t.slice(1); }
+  t = t.replace(/%$/, ''); t = lay.nf === 'vi' ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, '');
+  if (!/^\d+(\.\d+)?$/.test(t)) return null; const v = parseFloat(t); return neg ? -v : v;
+}
+function selStats() {
+  const el = $('selStat'); if (!SEL.cells.length) { el.hidden = true; return; }
+  const lay = L(), rows = new Set(SEL.cells.map((td) => td.parentElement)), anyDetail = [...rows].some((tr) => tr.classList.contains('dr'));
+  let sum = 0, n = 0;
+  for (const td of SEL.cells) { const tr = td.parentElement; if (anyDetail && !tr.classList.contains('dr')) continue; const v = cellNum(td, lay); if (v === null) continue; sum += v; n++; } // có dòng chi tiết thì không cộng dòng nhóm / tổng (tránh cộng 2 lần)
+  const f = (x) => fmtNumL(x, Math.abs(x % 1) > 1e-9 ? 2 : 0, lay) || '0';
+  el.innerHTML = `Đã chọn <b>${SEL.cells.length.toLocaleString('vi-VN')}</b> ô · <b>${rows.size.toLocaleString('vi-VN')}</b> dòng` + (n ? ` · Đếm số: <b>${n.toLocaleString('vi-VN')}</b> · Tổng: <b>${f(sum)}</b> · Trung bình: <b>${f(sum / n)}</b>` : '');
+  el.title = anyDetail ? 'Tổng chỉ cộng các dòng chi tiết đang chọn (bỏ qua dòng nhóm / tổng để không cộng 2 lần)' : ''; el.hidden = false;
+}
+const schedSel = () => { if (!SEL.raf) SEL.raf = requestAnimationFrame(updSel); };
+sheet.addEventListener('mousedown', (e) => {
+  if (S.tab === 'design' || e.button !== 0) return; const td = e.target.closest('.rpt tbody td'); if (!td || e.target.closest('.tg,button,a,input')) return;
+  e.preventDefault(); const row = td.classList.contains('no');
+  if (e.shiftKey && SEL.a && SEL.mode !== 'col') { SEL.b = td; } else { SEL.a = SEL.b = td; SEL.mode = row ? 'row' : 'cell'; SEL.trs = null; }
+  SEL.drag = true; document.body.classList.add('cselecting'); updSel();
+});
+document.addEventListener('mousemove', (e) => { if (!SEL.drag) return; const td = document.elementFromPoint(e.clientX, e.clientY); const c = td && td.closest && td.closest('.rpt tbody td'); if (c && c !== SEL.b) { SEL.b = c; schedSel(); } });
+document.addEventListener('mouseup', () => { if (SEL.drag) { SEL.drag = false; document.body.classList.remove('cselecting'); } });
+document.addEventListener('mousedown', (e) => { if (SEL.cells.length && !e.target.closest('.rpt tbody, .rpt thead, #selStat, .menu, .modal')) clearSel(); });
+document.addEventListener('keydown', (e) => {
+  if (!SEL.cells.length) return;
+  if (e.key === 'Escape') { clearSel(); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c' && !e.target.closest('input,textarea,[contenteditable="true"]')) { // chép vùng chọn dạng bảng (dán được vào Excel)
+    e.preventDefault(); const by = new Map(); for (const td of SEL.cells) { const tr = td.parentElement; if (!by.has(tr)) by.set(tr, []); by.get(tr).push(td); }
+    const txt = [...by.values()].map((tds) => tds.map((td) => td.textContent.trim()).join('\t')).join('\n'); copyText(txt).then((ok) => toast(ok ? 'Đã chép ' + SEL.cells.length + ' ô.' : 'Không chép được.'));
+  }
+});
+function selCol(th, ext) {
+  const tb = sheet.querySelector('.rpt tbody tr'); if (!tb) return;
+  if (ext && SEL.mode === 'col' && SEL.a) { SEL.b = th; } else { SEL.a = SEL.b = th; SEL.mode = 'col'; SEL.trs = null; }
+  updSel();
+}
+
 sheet.addEventListener('click', (e) => {
+  if (S.tab !== 'design') { const th = e.target.closest('.rpt thead th'); if (th && !e.target.closest('button')) { selCol(th, e.shiftKey); return; } }
   if (e.target.id === 'btnMoreRows') { S.cap += VIEW_CAP; render(); return; }
   // thanh nhóm
-  const dd = e.target.closest('td[data-dd]'); if (dd && S.tab !== 'design' && !e.ctrlKey && !e.metaKey && !e.shiftKey) { /* Ctrl + bấm vẫn là mở / thu gọn nhóm */ openDrill(+dd.dataset.dd); return; }
+  if (e.target.closest('td[data-dd]') && S.tab !== 'design' && !e.ctrlKey && !e.metaKey) return; /* ô số: bấm 1 lần để chọn, nhấp đúp để xem chi tiết; Ctrl + bấm vẫn mở / thu nhóm */
   if (e.target.closest('[data-pvx]')) { apply((l) => { l.pv = null; }, true); return; }
   if (e.target.closest('#pvChip')) { const r = e.target.closest('#pvChip').getBoundingClientRect(); ctxMenu(r.left, r.bottom + 4, [...(S.tab === 'view' ? [{ h: 'Chỉ áp dụng cho lần xem này' }] : []), ...pivotItems(L())]); return; }
   if (e.target.closest('#pvAddBtn')) { const r = e.target.closest('#pvAddBtn').getBoundingClientRect(), lay = L(), vis = new Set(lay.cols.map((c) => c.f)); const fs = S.fields.filter((f) => !f.calc || true);
@@ -1187,7 +1251,7 @@ sheet.addEventListener('click', (e) => {
 });
 // Bấm đúp tiêu đề cột (thiết kế) → đổi tên ngay trên mẫu
 sheet.addEventListener('dblclick', (e) => {
-  if (S.tab !== 'design') return; const th = e.target.closest('tr.h1 th[data-ci], tr.h2 th[data-ci]'); if (!th) return;
+  if (S.tab !== 'design') { const dd = e.target.closest('td[data-dd]'); if (dd) { e.preventDefault(); openDrill(+dd.dataset.dd); } return; } const th = e.target.closest('tr.h1 th[data-ci], tr.h2 th[data-ci]'); if (!th) return;
   const hl = th.querySelector('.hl'); th.draggable = false; hl.contentEditable = 'true'; hl.dataset.ed = 'h:' + th.dataset.ci; hl.focus();
   const r = document.createRange(); r.selectNodeContents(hl); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
 });
@@ -1389,13 +1453,14 @@ $('rX').onclick = () => { if (S.tgt !== 'col' || S.selCol < 0) return; L().cols.
 $('rGrid').oninput = () => { L().grid = $('rGrid').value; render(); }; $('rGrid').onchange = () => changed();
 $('rZebra').onclick = () => { L().zebra = !L().zebra; changed(); };
 // Thiết lập chung (bảng nhỏ)
-const GBIND = [['lNf', 'nf'], ['lDp', 'dp'], ['lNeg', 'neg'], ['lZero', 'zero'], ['lDf', 'df'], ['lFs', 'fs', 'n'], ['lShowF', 'showF', 'c'], ['lFit', 'fit', 'c']];
+const GBIND = [['lNf', 'nf'], ['lDp', 'dp'], ['lNeg', 'neg'], ['lZero', 'zero'], ['lDf', 'df'], ['lFs', 'fs', 'n'], ['lShowF', 'showF', 'c'], ['lFit', 'fit', 'c'], ['lDrill', 'drill', 'c']];
 const getP = (o, p) => p.split('.').reduce((a, k) => (a ? a[k] : undefined), o);
 const setP = (o, p, v) => { const ks = p.split('.'); const last = ks.pop(); ks.reduce((a, k) => a[k], o)[last] = v; };
-function syncGset() { for (const [id, p, t] of GBIND) { const v = getP(L(), p); if (t === 'c') $(id).checked = !!v; else $(id).value = v ?? ''; } }
+function syncGset() { for (const [id, p, t] of GBIND) { const v = getP(L(), p); if (t === 'c') $(id).checked = !!v; else $(id).value = v ?? ''; } $('lDrill').checked = drillOn(L()); }
 for (const [id, p, t] of GBIND) $(id).addEventListener('change', () => { setP(L(), p, t === 'c' ? $(id).checked : t === 'n' ? +$(id).value || 13 : $(id).value); changed(); });
 $('rGset').onclick = (e) => { const p = $('gset'); if (!p.hidden) { p.hidden = true; return; } syncGset(); p.hidden = false; const r = e.currentTarget.getBoundingClientRect(); p.style.left = Math.max(8, Math.min(r.left, innerWidth - 330)) + 'px'; p.style.top = (r.bottom + 6) + 'px'; };
 $('gsetX').onclick = () => { $('gset').hidden = true; };
+$('rUndo').onclick = () => histGo(-1); $('rRedo').onclick = () => histGo(1);
 
 /* ---------------- thanh bên: thiết kế ---------------- */
 document.querySelectorAll('.sec h3').forEach((h) => h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed')));
@@ -1469,10 +1534,36 @@ function syncDesignUI() { renderColList(); renderFilters(); }
 /* ---------------- thay đổi + lưu ---------------- */
 let dirty = false;
 function changed(full) {
-  dirty = true; if (full) syncDesignUI();
+  dirty = true; if (full) syncDesignUI(); histPush();
   render(); packHint();
   if (!S.dash) autosave(); else if (isEdit()) setStatus('wait', 'Có thay đổi chưa lưu khối');
 }
+/* ---------- Hoàn tác (Ctrl+Z) / Làm lại (Ctrl+Y) khi thiết kế ---------- */
+const HMAX = 80;
+const histSnap = () => JSON.stringify({ layouts: S.cfg.layouts, filters: S.cfg.filters, calcs: S.cfg.calcs, cur: S.cfg.cur });
+function histReset() { if (!S.cfg) return; S.hist = { st: [histSnap()], i: 0, t: 0 }; histBtns(); }
+function histPush() {
+  if (!S.cfg || S.tab !== 'design') return; if (!S.hist) histReset(); const H = S.hist, j = histSnap(); if (j === H.st[H.i]) return;
+  const now = Date.now();
+  if (H.i > 0 && now - H.t < 400 && H.i === H.st.length - 1) H.st[H.i] = j; // gõ / kéo liên tục → gộp thành 1 bước
+  else { H.st = H.st.slice(0, H.i + 1); H.st.push(j); if (H.st.length > HMAX) H.st.shift(); H.i = H.st.length - 1; }
+  H.t = now; histBtns();
+}
+function histGo(d) {
+  const H = S.hist; if (!H) return; const k = H.i + d; if (k < 0 || k >= H.st.length) return toast(d < 0 ? 'Không còn bước để hoàn tác.' : 'Không còn bước để làm lại.', 1500);
+  H.i = k; H.t = 0; const o = JSON.parse(H.st[k]), keep = { src: S.cfg.src, __dc: S.cfg.__dc, __ts: S.cfg.__ts };
+  S.cfg = Object.assign(fixCfg(Object.assign({}, S.cfg, o)), keep); refreshFields();
+  S.vlay = null; S.tgt = 'title'; S.selCol = null; S.selRange = null; dirty = true;
+  syncDesignUI(); renderLayoutTabs(); render(); packHint(); syncRibbon(); if (!$('gset').hidden) syncGset();
+  if (!S.dash) autosave(); else if (isEdit()) setStatus('wait', 'Có thay đổi chưa lưu khối'); histBtns();
+}
+function histBtns() { const H = S.hist, u = $('rUndo'), r = $('rRedo'); if (!u) return; u.disabled = !H || H.i <= 0; r.disabled = !H || H.i >= H.st.length - 1; }
+document.addEventListener('keydown', (e) => {
+  if (S.tab !== 'design' || !(e.ctrlKey || e.metaKey)) return; const k = e.key.toLowerCase(); if (k !== 'z' && k !== 'y') return;
+  if (e.target.closest('input,textarea,select,[contenteditable="true"]')) return; // trong ô đang gõ: để trình duyệt tự hoàn tác chữ
+  if ($('modal').classList.contains('show')) return;
+  e.preventDefault(); histGo(k === 'y' || e.shiftKey ? 1 : -1);
+});
 const autosave = debounce(async () => { if (!S.cfg.src.tableId) return; await stoSet('rs-cfg:' + S.cfg.src.tableId, S.cfg); setStatus('ok', 'Đã lưu thiết kế ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })); dirty = false; }, 900);
 async function stoGet(k) { let v = null; try { v = await withTimeout(bitable.bridge.getData(k), 3000); } catch (e) {} if (v === null || v === undefined) { try { v = JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) {} } return v; }
 async function stoSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} try { await withTimeout(bitable.bridge.setData(k, v), 3000); } catch (e) {} }
